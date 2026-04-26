@@ -36,18 +36,18 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     }
 }
 
-/// Sidebar that looks like macOS's native one but uses *our* accent for
-/// selection. The native `List(.sidebar)` ignores `.tint` and draws its
-/// selection with `NSColor.controlAccentColor` (system blue) regardless,
-/// so we render selection ourselves with `.listRowBackground` and a
-/// rounded accent fill underneath each row.
+/// Custom sidebar that *looks* native (List(.sidebar) chrome with section
+/// headers and the sidebar material) but doesn't hand selection to the
+/// system. Each row is a `Button` that updates the parent's binding —
+/// the native selection rectangle never appears, so our accent
+/// `.listRowBackground` is the *only* highlight you see.
 struct Sidebar: View {
     @LumeAccent private var accent
     @Binding var selection: SidebarItem
     @AppStorage(CaptureSettings.Key.captureImages.rawValue) private var captureImages: Bool = false
 
     var body: some View {
-        List(selection: $selection) {
+        List {
             Section("Library") {
                 row(.all)
                 row(.pinned)
@@ -72,28 +72,32 @@ struct Sidebar: View {
             }
         }
         .listStyle(.sidebar)
-        .tint(accent)
     }
 
     @ViewBuilder
     private func row(_ item: SidebarItem) -> some View {
         let isSelected = selection == item
-        Label(item.rawValue, systemImage: item.symbol)
-            .tag(item)
-            // Override the native selection rectangle (controlAccentColor)
-            // with our accent. listRowBackground replaces the row's
-            // background entirely — including the selection highlight.
-            .listRowBackground(
-                Group {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(accent.opacity(0.22))
-                            .padding(.horizontal, 4)
-                    } else {
-                        Color.clear
-                    }
+        Button {
+            selection = item
+        } label: {
+            Label(item.rawValue, systemImage: item.symbol)
+                .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
+                .symbolRenderingMode(.hierarchical)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 2)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(
+            Group {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(accent.opacity(0.22))
+                        .padding(.horizontal, 6)
+                } else {
+                    Color.clear
                 }
-            )
-            .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
+            }
+        )
     }
 }
