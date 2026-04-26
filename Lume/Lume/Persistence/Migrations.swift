@@ -107,6 +107,10 @@ enum Migrations {
             """)
         }
 
+        migrator.registerMigration("v2_tag_icon") { db in
+            try db.execute(sql: "ALTER TABLE tag ADD COLUMN icon TEXT")
+        }
+
         return migrator
     }
 }

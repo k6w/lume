@@ -63,14 +63,14 @@ enum TextDetector {
         }
         var symbol: String {
             switch self {
-            case .lowercase:    return "textformat.abc"
-            case .uppercase:    return "textformat"
+            case .lowercase:    return "textformat.size.smaller"
+            case .uppercase:    return "textformat.size.larger"
             case .trim:         return "scissors"
             case .prettyJSON:   return "curlybraces"
-            case .base64Encode: return "lock.rectangle"
-            case .base64Decode: return "lock.open.rectangle"
+            case .base64Encode: return "arrow.up.square"
+            case .base64Decode: return "arrow.down.square"
             case .urlEncode:    return "link"
-            case .urlDecode:    return "link.badge.plus"
+            case .urlDecode:    return "link.circle"
             }
         }
 

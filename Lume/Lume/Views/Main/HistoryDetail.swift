@@ -10,6 +10,7 @@ struct HistoryDetail: View {
 
     @State private var isEditing = false
     @State private var editBuffer = ""
+    @State private var transformResult: (TextDetector.Transform, String)?
 
     var body: some View {
         if let clip {
@@ -23,6 +24,9 @@ struct HistoryDetail: View {
                     if let plain = clip.plainText, !plain.isEmpty {
                         smartActions(plain, clip: clip)
                         transforms(plain)
+                        if let (kind, result) = transformResult {
+                            transformResultCard(kind: kind, text: result)
+                        }
                         textStats(plain)
                     }
                     metadata(clip)
@@ -32,6 +36,7 @@ struct HistoryDetail: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .navigationTitle("")
+            .onChange(of: clip.id) { _, _ in transformResult = nil }
         } else {
             VStack(spacing: 12) {
                 Spacer()
@@ -206,13 +211,46 @@ struct HistoryDetail: View {
     }
 
     private func apply(_ transform: TextDetector.Transform, on s: String) {
+        // Inline only — show the result in a card under the body. Doesn't
+        // touch the pasteboard or create a new history entry. The user
+        // can copy from the result card if they want it.
         guard let result = transform.apply(to: s) else { return }
-        let pb = NSPasteboard.general
-        pb.clearContents()
-        pb.setString(result, forType: .string)
-        // Also persist the transformed version so it shows up in history.
-        let clip = Clip.text(result, sourceBundleID: nil)
-        try? environment.clipRepository.upsert(clip)
+        transformResult = (transform, result)
+    }
+
+    private func transformResultCard(kind: TextDetector.Transform, text: String) -> some View {
+        let useMono = kind == .prettyJSON || kind == .base64Encode || kind == .base64Decode
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: kind.symbol)
+                    .foregroundStyle(LumeTheme.accent)
+                Text(kind.label)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Button {
+                    let pb = NSPasteboard.general
+                    pb.clearContents()
+                    pb.setString(text, forType: .string)
+                } label: { Label("Copy", systemImage: "doc.on.doc") }
+                    .controlSize(.small)
+                Button {
+                    transformResult = nil
+                } label: { Label("Dismiss", systemImage: "xmark") }
+                    .controlSize(.small)
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+            }
+            ScrollView {
+                Text(text)
+                    .font(useMono ? .system(.body, design: .monospaced) : .body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+                    .padding(12)
+            }
+            .frame(maxHeight: 220)
+            .background(.regularMaterial,
+                        in: RoundedRectangle(cornerRadius: Tokens.Radius.m, style: .continuous))
+        }
     }
 
     // MARK: text stats
@@ -274,16 +312,18 @@ struct HistoryDetail: View {
     }
 }
 
-/// Inline tag chips with an "Add" menu listing all known tags. Toggling
-/// a chip adds/removes the link.
+/// Inline tag chips with an "Add Tag" menu and a "New Tag…" entry that
+/// opens the editor sheet. Created tags are auto-applied to the current
+/// clip so the create-and-tag flow is one click.
 private struct TagsAssigner: View {
     let clip: Clip
     let environment: AppEnvironment
     @State private var assigned: [Tag] = []
     @State private var allTags: [Tag] = []
+    @State private var draft: Tag?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Tags")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -292,31 +332,56 @@ private struct TagsAssigner: View {
                     chip(tag, removable: true) { remove(tag) }
                 }
                 Menu {
+                    Button {
+                        draft = Tag(id: UUID().uuidString, name: "",
+                                    colorHex: LumeTheme.accent.hexString, icon: "tag")
+                    } label: {
+                        Label("New Tag…", systemImage: "plus")
+                    }
                     let assignedIDs = Set(assigned.map(\.id))
                     let unassigned = allTags.filter { !assignedIDs.contains($0.id) }
-                    if unassigned.isEmpty {
-                        Text("All tags applied")
-                    } else {
+                    if !unassigned.isEmpty {
+                        Divider()
                         ForEach(unassigned, id: \.id) { tag in
-                            Button(tag.name) { add(tag) }
+                            Button {
+                                add(tag)
+                            } label: {
+                                Label(tag.name, systemImage: tag.icon ?? "tag")
+                            }
                         }
                     }
                 } label: {
                     Label("Add Tag", systemImage: "plus.circle")
                         .font(.caption)
                 }
-                .buttonStyle(.bordered)
+                .menuStyle(.borderedButton)
                 .controlSize(.small)
+                .fixedSize()
                 Spacer()
             }
         }
         .onAppear(perform: reload)
+        .sheet(item: $draft) { tag in
+            TagEditorSheet(
+                tag: tag,
+                title: "New Tag",
+                onSave: { saved in
+                    _ = try? environment.tagRepository.upsert(saved)
+                    try? environment.tagRepository.add(tagID: saved.id, toClip: clip.id)
+                    draft = nil
+                    reload()
+                },
+                onCancel: { draft = nil }
+            )
+        }
     }
 
     private func chip(_ tag: Tag, removable: Bool, onRemove: @escaping () -> Void) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(Color(hex: tag.colorHex ?? "#9B8CFF") ?? .gray)
-                .frame(width: 8, height: 8)
+        let color = Color(hex: tag.colorHex ?? "#7A70FF") ?? .gray
+        return HStack(spacing: 5) {
+            Image(systemName: tag.icon ?? "tag")
+                .font(.caption2)
+                .foregroundStyle(color)
             Text(tag.name).font(.caption)
             if removable {
                 Button(action: onRemove) {
@@ -329,6 +394,7 @@ private struct TagsAssigner: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 3)
         .background(.thinMaterial, in: Capsule())
+        .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 0.5))
     }
 
     private func reload() {

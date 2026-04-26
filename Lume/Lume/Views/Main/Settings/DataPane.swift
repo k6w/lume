@@ -41,9 +41,7 @@ struct DataPane: View {
                 }
                 Text("Pinned clips are never purged.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Button("Purge now", role: .destructive) {
-                    environment.purge.purgeNow()
-                }
+                Button("Purge now", role: .destructive) { purgeNow() }
             }
 
             Section("iCloud") {
@@ -75,6 +73,42 @@ struct DataPane: View {
         }
         .formStyle(.grouped)
         .onAppear(perform: reload)
+    }
+
+    private func purgeNow() {
+        // Compute the same per-kind cutoffs the scheduler uses, run the
+        // purge, and report the row count back to the user. Without this
+        // confirmation, "nothing happened" was indistinguishable from
+        // "nothing's old enough to purge yet".
+        let now = Date()
+        let cutoffs: [ClipKind: Date] = [
+            .text:  now.addingTimeInterval(TimeInterval(-86_400 * retentionText)),
+            .rtf:   now.addingTimeInterval(TimeInterval(-86_400 * retentionText)),
+            .html:  now.addingTimeInterval(TimeInterval(-86_400 * retentionText)),
+            .code:  now.addingTimeInterval(TimeInterval(-86_400 * retentionText)),
+            .image: now.addingTimeInterval(TimeInterval(-86_400 * retentionImages)),
+            .file:  now.addingTimeInterval(TimeInterval(-86_400 * retentionFiles)),
+            .color: now.addingTimeInterval(TimeInterval(-86_400 * retentionColors)),
+        ]
+        Task.detached {
+            let removed = (try? environment.clipRepository.purge(perKindCutoffs: cutoffs)) ?? 0
+            try? environment.clipRepository.compact()
+            await MainActor.run {
+                let alert = NSAlert()
+                if removed == 0 {
+                    alert.messageText = "Nothing to purge."
+                    alert.informativeText = "No clips are older than the retention windows you set. Pin anything you want to keep forever; everything else falls off automatically."
+                    alert.alertStyle = .informational
+                } else {
+                    alert.messageText = "Purged \(removed) clip\(removed == 1 ? "" : "s")."
+                    alert.informativeText = "Database compacted."
+                    alert.alertStyle = .informational
+                }
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+                reload()
+            }
+        }
     }
 
     private func confirmAndClear() {

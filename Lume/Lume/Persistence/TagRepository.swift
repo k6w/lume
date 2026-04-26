@@ -72,15 +72,17 @@ final class TagRepository: @unchecked Sendable {
     func tagCounts() throws -> [(Tag, Int)] {
         try database.pool.read { db in
             let rows = try Row.fetchAll(db, sql: """
-                SELECT tag.id AS id, tag.name AS name, tag.colorHex AS colorHex, COUNT(clip_tag.clipID) AS n
+                SELECT tag.id AS id, tag.name AS name, tag.colorHex AS colorHex,
+                       tag.icon AS icon, COUNT(clip_tag.clipID) AS n
                 FROM tag LEFT JOIN clip_tag ON clip_tag.tagID = tag.id
                 GROUP BY tag.id ORDER BY tag.name
             """)
             return rows.compactMap { r in
                 guard let id: String = r["id"], let name: String = r["name"] else { return nil }
                 let color: String? = r["colorHex"]
+                let icon: String? = r["icon"]
                 let n: Int = r["n"] ?? 0
-                return (Tag(id: id, name: name, colorHex: color), n)
+                return (Tag(id: id, name: name, colorHex: color, icon: icon), n)
             }
         }
     }

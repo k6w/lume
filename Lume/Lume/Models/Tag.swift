@@ -7,8 +7,10 @@ struct Tag: Identifiable, Codable, Hashable, Sendable, FetchableRecord, MutableP
     var id: String
     var name: String
     var colorHex: String?
+    /// SF Symbol name, e.g. `"tag.fill"`. Optional — falls back to `tag` in UI.
+    var icon: String?
 
-    enum Columns: String, ColumnExpression { case id, name, colorHex }
+    enum Columns: String, ColumnExpression { case id, name, colorHex, icon }
 }
 
 struct ClipTag: Codable, Hashable, Sendable, FetchableRecord, PersistableRecord {
