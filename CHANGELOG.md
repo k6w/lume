@@ -6,6 +6,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-26
+
+### Fixed
+- **Sidebar selection** now wears the user's accent. macOS's
+  `List(.sidebar)` ignores SwiftUI's `.tint` and draws selection with
+  `NSColor.controlAccentColor`. We replace the native rectangle via
+  `.listRowBackground` per row.
+- **Onboarding bottom overlap**: removed the redundant "Six quick
+  screens" footer from WelcomeStep and added 12/14 pt of breathing
+  room around the step-indicator capsules.
+- **Native control tinting**: `.tint(accent)` applied at every window
+  root so toggles, segmented pickers, prominent buttons, sliders,
+  search-field clear button, and the indicator capsules pick up the
+  custom accent.
+- **Updates tab showed v0.1**: `MARKETING_VERSION` bumped to 0.3.0.
+
 ### Added
 - **Custom hotkey recorder** in Settings → Hot Keys. Click the recorder,
   press the chord; the new shortcut is registered globally and persisted
@@ -91,5 +107,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 First public release. See the release notes for what shipped in v0.2
 versus what's queued for later.
 
-[Unreleased]: https://github.com/k6w/lume/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/k6w/lume/compare/v0.3.0...HEAD
+[0.3.0]:      https://github.com/k6w/lume/releases/tag/v0.3.0
 [0.2.0]:      https://github.com/k6w/lume/releases/tag/v0.2.0

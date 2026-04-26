@@ -25,7 +25,8 @@ struct OnboardingWindow: View {
                         removal:   .move(edge: .leading).combined(with: .opacity)
                     ))
                 indicator
-                    .padding(.bottom, 6)
+                    .padding(.top, 12)
+                    .padding(.bottom, 14)
                 buttonBar
             }
             .padding(Tokens.Spacing.xl)

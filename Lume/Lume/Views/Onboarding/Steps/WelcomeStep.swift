@@ -26,9 +26,6 @@ struct WelcomeStep: View {
                 .padding(.horizontal, Tokens.Spacing.xl)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
-            Text("Six quick screens. Hit Continue.")
-                .font(.footnote)
-                .foregroundStyle(.tertiary)
         }
     }
 }

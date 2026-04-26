@@ -36,7 +36,13 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
     }
 }
 
+/// Sidebar that looks like macOS's native one but uses *our* accent for
+/// selection. The native `List(.sidebar)` ignores `.tint` and draws its
+/// selection with `NSColor.controlAccentColor` (system blue) regardless,
+/// so we render selection ourselves with `.listRowBackground` and a
+/// rounded accent fill underneath each row.
 struct Sidebar: View {
+    @LumeAccent private var accent
     @Binding var selection: SidebarItem
     @AppStorage(CaptureSettings.Key.captureImages.rawValue) private var captureImages: Bool = false
 
@@ -66,10 +72,28 @@ struct Sidebar: View {
             }
         }
         .listStyle(.sidebar)
+        .tint(accent)
     }
 
+    @ViewBuilder
     private func row(_ item: SidebarItem) -> some View {
+        let isSelected = selection == item
         Label(item.rawValue, systemImage: item.symbol)
             .tag(item)
+            // Override the native selection rectangle (controlAccentColor)
+            // with our accent. listRowBackground replaces the row's
+            // background entirely — including the selection highlight.
+            .listRowBackground(
+                Group {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(accent.opacity(0.22))
+                            .padding(.horizontal, 4)
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+            .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
     }
 }
