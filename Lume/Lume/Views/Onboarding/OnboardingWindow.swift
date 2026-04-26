@@ -31,6 +31,7 @@ struct OnboardingWindow: View {
             .padding(Tokens.Spacing.xl)
         }
         .frame(width: 620, height: 640)
+        .tint(accent)
     }
 
     private var background: some View {

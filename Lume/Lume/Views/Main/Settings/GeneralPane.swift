@@ -43,6 +43,14 @@ struct GeneralPane: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            Section("Help") {
+                Button("Show Onboarding Again") {
+                    UserDefaults.standard.set(false, forKey: "lume.onboarding.completed")
+                    environment.windows.openOnboarding()
+                }
+                Text("Replays the seven-step welcome flow.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
             Section("Updates") {
                 LabeledContent("Installed", value: "Lume \(environment.updateChecker.installedVersion)")
                 if let latest = environment.updateChecker.latest {

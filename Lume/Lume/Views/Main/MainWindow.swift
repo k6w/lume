@@ -2,6 +2,7 @@ import SwiftUI
 
 @MainActor
 struct MainWindowRoot: View {
+    @LumeAccent private var accent
     let environment: AppEnvironment
     @State private var selection: SidebarItem = .all
     @State private var query: String = ""
@@ -11,6 +12,14 @@ struct MainWindowRoot: View {
     @State private var tagObservationTask: Task<Void, Never>?
 
     var body: some View {
+        rootContent
+            // .tint propagates to every native control beneath: toggles,
+            // segmented pickers, prominent buttons, list-selection highlight,
+            // sliders, the search-field clear cross, etc.
+            .tint(accent)
+    }
+
+    private var rootContent: some View {
         NavigationSplitView {
             Sidebar(selection: $selection)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 260)

@@ -26,6 +26,11 @@ struct PopoverRoot: View {
     @State private var captureFlash = false
 
     var body: some View {
+        rootContent
+            .tint(accent)
+    }
+
+    private var rootContent: some View {
         GlassRoot {
             VStack(spacing: 0) {
                 header
