@@ -81,8 +81,10 @@ struct HistoryBrowser: View {
         Button {
             selection = clip.id
         } label: {
+            // Text stays .primary for contrast against the accent backdrop.
+            // The ClipListItem already tints its kind icon with accent,
+            // which is enough of a selection signal.
             ClipListItem(clip: clip)
-                .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
         }

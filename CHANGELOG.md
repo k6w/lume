@@ -6,6 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-04-26
+
+### Fixed
+- **Sidebar arrow-key navigation** — restored after dropping
+  `List(selection:)`. Implemented by hand with `@FocusState` +
+  `.onKeyPress(.upArrow/.downArrow)` walking the visible items.
+- **Main-window clip list** had the same double-highlight as the
+  sidebar (system selection rect ignoring our tint). Same fix —
+  custom Button rows + accent `.listRowBackground`. Arrow-key
+  navigation reimplemented with auto-scroll via `ScrollViewReader`.
+- **Sidebar text contrast**: selected row's text stays `.primary`
+  with semibold weight; only the icon picks up the accent. The
+  text was washing out against the accent-tinted backdrop.
+
 ## [0.3.0] — 2026-04-26
 
 ### Fixed
@@ -107,6 +121,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 First public release. See the release notes for what shipped in v0.2
 versus what's queued for later.
 
-[Unreleased]: https://github.com/k6w/lume/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/k6w/lume/compare/v0.3.1...HEAD
+[0.3.1]:      https://github.com/k6w/lume/releases/tag/v0.3.1
 [0.3.0]:      https://github.com/k6w/lume/releases/tag/v0.3.0
 [0.2.0]:      https://github.com/k6w/lume/releases/tag/v0.2.0

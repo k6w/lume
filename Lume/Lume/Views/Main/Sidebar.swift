@@ -113,12 +113,20 @@ struct Sidebar: View {
         Button {
             selection = item
         } label: {
-            Label(item.rawValue, systemImage: item.symbol)
-                .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
-                .symbolRenderingMode(.hierarchical)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 2)
-                .contentShape(Rectangle())
+            HStack(spacing: 8) {
+                Image(systemName: item.symbol)
+                    .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.secondary))
+                    .frame(width: 16)
+                Text(item.rawValue)
+                    // Always .primary — full contrast against the accent
+                    // backdrop. Selection is signalled by accent-icon and
+                    // semibold weight, not by tinting the text.
+                    .foregroundStyle(.primary)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .listRowBackground(
