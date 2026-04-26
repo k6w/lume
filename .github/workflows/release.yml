@@ -15,55 +15,44 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build & Release
-    runs-on: macos-latest
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve version
         id: ver
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "tag=v${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+            v="${{ github.event.inputs.version }}"
           else
-            tag="${GITHUB_REF##*/}"
-            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
-            echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+            v="${GITHUB_REF##*/}"
+            v="${v#v}"
           fi
+          echo "version=$v"   >> "$GITHUB_OUTPUT"
+          echo "tag=v$v"      >> "$GITHUB_OUTPUT"
 
-      - name: Show toolchain
-        run: |
-          sw_vers
-          xcodebuild -version
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Build release artifact
-        run: ./scripts/release.sh "${{ steps.ver.outputs.version }}"
-
-      - name: Verify artifacts exist
-        run: |
-          set -e
-          ls -la dist/
-          test -f "dist/Lume-${{ steps.ver.outputs.version }}.zip"
-          test -f "dist/Lume-${{ steps.ver.outputs.version }}.dmg"
-          test -f "dist/SHA256SUMS"
-
-      - name: Create GitHub Release
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          name: ${{ steps.ver.outputs.tag }}
+          name: Lume ${{ steps.ver.outputs.tag }}
           draft: false
           prerelease: false
           generate_release_notes: true
           body: |
-            Lume ${{ steps.ver.outputs.tag }} — unsigned macOS 26 build.
+            Lume ${{ steps.ver.outputs.tag }}.
+
+            **Pre-built binaries are uploaded out-of-band** because GitHub
+            Actions hosted macOS runners don't yet ship the macOS 26 SDK.
+            The .app bundle in the assets below (when present) was built
+            from this exact commit on a macOS 26 box via
+            `./scripts/release.sh`.
 
             **First-launch Gatekeeper bypass:**
             ```sh
@@ -71,8 +60,4 @@ jobs:
             ```
             Or right-click the app, choose **Open**, then click **Open** in the warning dialog.
 
-            See `CHANGELOG.md` for full release notes.
-          files: |
-            dist/Lume-${{ steps.ver.outputs.version }}.zip
-            dist/Lume-${{ steps.ver.outputs.version }}.dmg
-            dist/SHA256SUMS
+            See `CHANGELOG.md` for the full release notes.

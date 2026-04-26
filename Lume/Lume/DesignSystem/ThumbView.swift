@@ -27,10 +27,11 @@ struct ThumbView: View {
         .frame(maxWidth: maxWidth, maxHeight: maxHeight)
         .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
         .task(id: data) {
-            // Decode off-main; keep the result.
-            let decoded: NSImage? = await Task.detached { NSImage(data: data) }.value
-            if let decoded {
-                await MainActor.run { image = Image(nsImage: decoded) }
+            // Decoding small JPEG thumbnails on the main actor is fine —
+            // they're ~10 KB. Avoiding `Task.detached` here keeps the code
+            // portable across SDKs that haven't promised NSImage: Sendable.
+            if let nsImage = NSImage(data: data) {
+                image = Image(nsImage: nsImage)
             }
         }
     }

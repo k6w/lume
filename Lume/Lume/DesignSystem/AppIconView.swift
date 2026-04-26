@@ -26,16 +26,13 @@ struct AppIconView: View {
     private func resolve() async {
         guard let id = bundleID else { icon = nil; return }
         if let cached = Self.cache[id] { icon = cached; return }
-        let resolved: NSImage? = await Task.detached {
-            guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { return nil }
-            return NSWorkspace.shared.icon(forFile: url.path)
-        }.value
-        if let resolved {
-            await MainActor.run {
-                Self.cache[id] = resolved
-                icon = resolved
-            }
-        }
+        // App-icon resolution is a fast filesystem lookup; main-actor
+        // execution keeps NSImage off the Sendable hot path while still
+        // letting SwiftUI await the result via `.task(id:)`.
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { return }
+        let resolved = NSWorkspace.shared.icon(forFile: url.path)
+        Self.cache[id] = resolved
+        icon = resolved
     }
 
     @MainActor private static var cache: [String: NSImage] = [:]
