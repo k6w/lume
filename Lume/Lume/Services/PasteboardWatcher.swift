@@ -11,6 +11,7 @@ final class PasteboardWatcher {
     private let repository: ClipRepository
     private let sensitivity: SensitivityDetector
     private let encryption: EncryptionService
+    private weak var pasteInjector: PasteInjector?
     private let pasteboard: NSPasteboard
     private var timer: Timer?
     private var lastChangeCount: Int
@@ -19,11 +20,13 @@ final class PasteboardWatcher {
         repository: ClipRepository,
         sensitivity: SensitivityDetector,
         encryption: EncryptionService,
+        pasteInjector: PasteInjector? = nil,
         pasteboard: NSPasteboard = .general
     ) {
         self.repository = repository
         self.sensitivity = sensitivity
         self.encryption = encryption
+        self.pasteInjector = pasteInjector
         self.pasteboard = pasteboard
         self.lastChangeCount = pasteboard.changeCount
     }
@@ -47,6 +50,11 @@ final class PasteboardWatcher {
         let count = pasteboard.changeCount
         guard count != lastChangeCount else { return }
         lastChangeCount = count
+
+        // Lume just wrote this — popover-paste, main-window Copy, etc.
+        // Don't re-capture our own work, that bumps hitCount and resets
+        // lastSeenAt for the clip the user just clicked.
+        if pasteInjector?.ownedChangeCount == count { return }
 
         guard let candidate = makeClipFromPasteboard() else { return }
 

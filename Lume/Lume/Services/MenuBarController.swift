@@ -103,9 +103,7 @@ final class MenuBarController: NSObject {
 
     private func pasteSnippet(_ snippet: Snippet) {
         let expanded = SnippetExpander.expand(snippet.body)
-        let pb = NSPasteboard.general
-        pb.clearContents()
-        pb.setString(expanded, forType: .string)
+        environment?.pasteInjector.copyPlainText(expanded)
         popover.performClose(nil)
         environment?.pasteInjector.simulatePaste()
     }

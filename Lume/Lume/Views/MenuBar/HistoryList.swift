@@ -23,6 +23,7 @@ struct HistoryList: View {
                     }
                 }
                 .padding(.horizontal, Tokens.Spacing.s)
+                .padding(.top, 6)
                 .padding(.bottom, Tokens.Spacing.s)
             }
             .scrollEdgeEffectStyle(.soft, for: .top)

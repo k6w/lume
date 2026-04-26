@@ -12,8 +12,19 @@ struct MainWindowRoot: View {
             Sidebar(selection: $selection)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 260)
         } detail: {
-            content
-                .navigationSplitViewColumnWidth(min: 600, ideal: 760)
+            VStack(spacing: 0) {
+                if environment.updateChecker.isUpdateAvailable,
+                   let release = environment.updateChecker.latest {
+                    UpdateBanner(
+                        release: release,
+                        installedVersion: environment.updateChecker.installedVersion,
+                        onOpen: {},
+                        onDismiss: { environment.updateChecker.dismissCurrent() }
+                    )
+                }
+                content
+            }
+            .navigationSplitViewColumnWidth(min: 600, ideal: 760)
         }
         .navigationSplitViewStyle(.balanced)
         // Hoisted toolbar: same shape on every tab so the title bar

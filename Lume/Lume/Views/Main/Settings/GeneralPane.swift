@@ -1,6 +1,9 @@
 import SwiftUI
+import AppKit
 
 struct GeneralPane: View {
+    let environment: AppEnvironment
+
     @AppStorage("lume.launchAtLogin")  private var launchAtLogin: Bool = true
     @AppStorage("lume.plainTextPaste") private var plainTextPaste: Bool = false
     @AppStorage("lume.showInDock")     private var showInDock: Bool = false
@@ -32,6 +35,36 @@ struct GeneralPane: View {
                 Text(popoverStyle.blurb)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+            }
+            Section("Updates") {
+                LabeledContent("Installed", value: "Lume \(environment.updateChecker.installedVersion)")
+                if let latest = environment.updateChecker.latest {
+                    LabeledContent("Latest on GitHub", value: latest.tag)
+                }
+                if let last = environment.updateChecker.lastCheckedAt {
+                    LabeledContent("Last checked",
+                                   value: last.formatted(.relative(presentation: .numeric)))
+                }
+                HStack {
+                    Button {
+                        Task { await environment.updateChecker.check() }
+                    } label: {
+                        if environment.updateChecker.isChecking {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text("Check for Updates")
+                        }
+                    }
+                    .disabled(environment.updateChecker.isChecking)
+                    Spacer()
+                    if environment.updateChecker.isUpdateAvailable,
+                       let release = environment.updateChecker.latest {
+                        Button {
+                            NSWorkspace.shared.open(release.url)
+                        } label: { Label("Download \(release.tag)", systemImage: "arrow.down.circle") }
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
             }
         }
         .formStyle(.grouped)

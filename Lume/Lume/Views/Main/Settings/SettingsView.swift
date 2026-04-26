@@ -40,7 +40,7 @@ struct SettingsView: View {
             ScrollView {
                 Group {
                     switch selection {
-                    case .general: GeneralPane()
+                    case .general: GeneralPane(environment: environment)
                     case .privacy: PrivacyPane(environment: environment)
                     case .tags:    TagsPane(environment: environment)
                     case .hotkeys: HotkeysPane(environment: environment)

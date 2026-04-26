@@ -45,19 +45,22 @@ struct HistoryBrowser: View {
                         .tag(clip.id)
                         .listRowSeparator(.hidden)
                         .contextMenu {
-                            Button("Paste") { paste(clip) }
-                                .keyboardShortcut(.return)
-                            Button(clip.isPinned ? "Unpin" : "Pin") { pin(clip) }
-                            Divider()
+                            Button("Copy") {
+                                environment.pasteInjector.copy(clip)
+                            }
                             Button("Copy as Plain Text") {
                                 environment.pasteInjector.copyAsPlainText(clip)
                             }
+                            Button(clip.isPinned ? "Unpin" : "Pin") { pin(clip) }
                             Divider()
                             Button(role: .destructive) { delete(clip) } label: {
                                 Text("Delete")
                             }
                         }
-                        .onTapGesture(count: 2) { paste(clip) }
+                        // No tap gestures here — the main window is for
+                        // viewing and organizing. Use the popover or the
+                        // toolbar Copy button to put a clip back on the
+                        // pasteboard.
                 }
                 .listStyle(.inset)
             }
@@ -148,10 +151,6 @@ struct HistoryBrowser: View {
 
     // MARK: actions
 
-    private func paste(_ clip: Clip) {
-        environment.pasteInjector.copy(clip)
-        environment.pasteInjector.simulatePaste()
-    }
     private func pin(_ clip: Clip) {
         try? environment.clipRepository.setPinned(!clip.isPinned, id: clip.id)
     }

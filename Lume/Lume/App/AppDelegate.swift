@@ -37,6 +37,7 @@ final class AppEnvironment {
     let sensitivity: SensitivityDetector
     let purge: PurgeScheduler
     let cloud: CloudSyncEngine
+    let updateChecker: UpdateChecker
     let windows: WindowRouter
 
     init() {
@@ -49,9 +50,15 @@ final class AppEnvironment {
         self.encryption = EncryptionService()
         self.sensitivity = SensitivityDetector()
         self.pasteInjector = PasteInjector()
-        self.pasteboardWatcher = PasteboardWatcher(repository: clips, sensitivity: sensitivity, encryption: encryption)
+        self.pasteboardWatcher = PasteboardWatcher(
+            repository: clips,
+            sensitivity: sensitivity,
+            encryption: encryption,
+            pasteInjector: pasteInjector
+        )
         self.purge = PurgeScheduler(repository: clips)
         self.cloud = CloudSyncEngine(database: db, repository: clips, encryption: encryption)
+        self.updateChecker = UpdateChecker()
         self.hotKey = HotKeyService()
         self.windows = WindowRouter(environment: nil)
         self.menuBar = MenuBarController(environment: nil)
@@ -67,6 +74,11 @@ final class AppEnvironment {
         await cloud.start()
         hotKey.register(default: .optionCommand("v")) { [weak self] in
             Task { @MainActor in self?.menuBar.showPopoverFromHotkey() }
+        }
+        // Check for updates a beat after boot, then once a day.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            await self?.updateChecker.check()
         }
     }
 

@@ -9,6 +9,12 @@ import Carbon.HIToolbox
 final class PasteInjector {
     private let pasteboard: NSPasteboard
 
+    /// `changeCount` we last wrote ourselves. The PasteboardWatcher
+    /// reads this to skip ticks Lume itself caused — without this the
+    /// popover-paste path triggers a re-capture, which bumps hitCount
+    /// and resets lastSeenAt for the clip you just clicked.
+    private(set) var ownedChangeCount: Int? = nil
+
     init(pasteboard: NSPasteboard = .general) {
         self.pasteboard = pasteboard
     }
@@ -43,13 +49,28 @@ final class PasteInjector {
         case .color:
             if let s = clip.colorHex { pasteboard.setString(s, forType: .string) }
         }
+        ownedChangeCount = pasteboard.changeCount
     }
 
     /// Place text on the pasteboard, stripping formatting first.
     func copyAsPlainText(_ clip: Clip) {
         guard let s = clip.plainText else { return }
+        copyPlainText(s)
+    }
+
+    /// Place a raw string on the pasteboard. The watcher will skip the
+    /// resulting changeCount tick because we record `ownedChangeCount`
+    /// after the write.
+    func copyPlainText(_ s: String) {
         pasteboard.clearContents()
         pasteboard.setString(s, forType: .string)
+        ownedChangeCount = pasteboard.changeCount
+    }
+
+    /// Manually mark the next pasteboard tick as ours — for callers that
+    /// wrote to the pasteboard directly without going through this class.
+    func markOwned() {
+        ownedChangeCount = pasteboard.changeCount
     }
 
     /// Synthesize a ⌘V keystroke. Silent no-op if Accessibility is not granted.

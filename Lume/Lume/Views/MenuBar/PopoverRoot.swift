@@ -17,8 +17,10 @@ struct PopoverRoot: View {
 
     @State private var query: String = ""
     @State private var clips: [Clip] = []
+    @State private var snippets: [Snippet] = []
     @State private var selection: String?
     @State private var observationTask: Task<Void, Never>?
+    @State private var snippetTask: Task<Void, Never>?
     @State private var lastCaptureID: String?
     @State private var captureFlash = false
 
@@ -45,8 +47,14 @@ struct PopoverRoot: View {
             .overlay(alignment: .top) { captureToast }
         }
         .frame(width: Tokens.Sizing.popoverWidth, height: Tokens.Sizing.popoverHeight)
-        .onAppear { startObservation() }
-        .onDisappear { observationTask?.cancel() }
+        .onAppear {
+            startObservation()
+            startSnippetObservation()
+        }
+        .onDisappear {
+            observationTask?.cancel()
+            snippetTask?.cancel()
+        }
         .onChange(of: query) { _, _ in refresh() }
         // Quick-paste: ⌘1...⌘9 paste the corresponding visible row.
         .background {
@@ -121,13 +129,16 @@ struct PopoverRoot: View {
     }
 
     private var snippetMenu: some View {
-        let allSnippets = (try? snippetRepository.all()) ?? []
-        return Menu {
-            if allSnippets.isEmpty {
+        Menu {
+            if snippets.isEmpty {
                 Text("No snippets yet")
             } else {
-                ForEach(allSnippets, id: \.id) { snippet in
-                    Button(snippet.title) { onSnippetPaste(snippet) }
+                ForEach(snippets, id: \.id) { snippet in
+                    Button {
+                        onSnippetPaste(snippet)
+                    } label: {
+                        Label(snippet.title, systemImage: "text.append")
+                    }
                 }
             }
         } label: {
@@ -172,6 +183,20 @@ struct PopoverRoot: View {
                 }
             } catch {
                 NSLog("[Lume] observe failed: \(error)")
+            }
+        }
+    }
+
+    private func startSnippetObservation() {
+        snippetTask?.cancel()
+        snippetTask = Task { @MainActor in
+            do {
+                let observation = snippetRepository.observeAll()
+                for try await fresh in observation.values(in: snippetRepository.pool) {
+                    self.snippets = fresh
+                }
+            } catch {
+                NSLog("[Lume] snippet observe failed: \(error)")
             }
         }
     }

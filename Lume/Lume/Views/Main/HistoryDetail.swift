@@ -228,9 +228,7 @@ struct HistoryDetail: View {
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Button {
-                    let pb = NSPasteboard.general
-                    pb.clearContents()
-                    pb.setString(text, forType: .string)
+                    environment.pasteInjector.copyPlainText(text)
                 } label: { Label("Copy", systemImage: "doc.on.doc") }
                     .controlSize(.small)
                 Button {
