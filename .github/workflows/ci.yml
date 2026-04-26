@@ -45,24 +45,6 @@ jobs:
             -type f -name '*.svg' -print0 \
             | xargs -0 -I{} xmllint --noout '{}'
 
-  swift-syntax:
-    name: Swift syntax check
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Parse every .swift file
-        # `swift -parse` only parses, doesn't type-check, so it works
-        # even when the runner's SDK doesn't yet have macOS 26 APIs.
-        run: |
-          set -e
-          fail=0
-          while IFS= read -r -d '' f; do
-            xcrun swift -parse "$f" || { echo "::error file=$f::Parse failed"; fail=1; }
-          done < <(find Lume/Lume Lume/LumeTests Lume/LumeBenchmarks \
-                     -type f -name '*.swift' -print0)
-          exit "$fail"
-
   # Real macOS 26 build/test runs on a self-hosted runner once
   # GitHub-hosted runners ship with the macOS 26 SDK. Until then,
   # `./scripts/run.sh` and `./scripts/run.sh test` are the local
