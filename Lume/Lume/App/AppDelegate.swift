@@ -72,7 +72,7 @@ final class AppEnvironment {
         pasteboardWatcher.start()
         purge.start()
         await cloud.start()
-        hotKey.register(default: .optionCommand("v")) { [weak self] in
+        hotKey.start { [weak self] in
             Task { @MainActor in self?.menuBar.showPopoverFromHotkey() }
         }
         // Check for updates a beat after boot, then once a day.

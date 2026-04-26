@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Reusable empty-state placeholder. One symbol, one title, one nudge.
 struct EmptyStateView: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     var symbol: String
     var title: String
     var subtitle: String? = nil
@@ -14,7 +14,7 @@ struct EmptyStateView: View {
             Spacer()
             Image(systemName: symbol)
                 .font(.system(size: 36, weight: .light))
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(accent)
                 .padding(.bottom, 4)
             Text(title)
                 .font(.title3.weight(.medium))

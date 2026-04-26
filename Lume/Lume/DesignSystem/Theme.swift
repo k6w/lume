@@ -1,33 +1,56 @@
 import SwiftUI
-import Observation
 
-/// User-tunable accent color for Lume.
+/// Brand accent color, persisted to UserDefaults under `LumeTheme.accentKey`.
 ///
-/// Single source of truth: `LumeTheme.shared`. Inject at the root of
-/// every window with `.environment(LumeTheme.shared)`, then read in
-/// views with `@Environment(LumeTheme.self) private var theme` and use
-/// `theme.accent`. The setter writes to UserDefaults so the choice
-/// survives restarts; the `@Observable` machinery makes every reading
-/// view re-render the moment the picker fires.
-@MainActor
-@Observable
-final class LumeTheme {
-    static let shared = LumeTheme()
+/// Views read it with the `@LumeAccent` property wrapper (declared below):
+///
+///     @LumeAccent private var accent
+///
+/// The wrapper is built on top of `@AppStorage`, so every view in every
+/// hosting controller — popover, main window, settings, onboarding —
+/// re-renders the moment the user moves the picker. SwiftUI broadcasts
+/// UserDefaults changes process-wide, which is the *only* mechanism that
+/// reliably crosses between independent `NSHostingController`s.
+enum LumeTheme {
     static let accentKey = "lume.accent"
+    static let defaultHex = "#7A70FF"
 
-    var accent: Color {
-        didSet {
-            UserDefaults.standard.set(accent.hexString, forKey: Self.accentKey)
+    /// Static convenience for non-View callers (e.g. AppKit code).
+    static var accent: Color {
+        get {
+            if let hex = UserDefaults.standard.string(forKey: accentKey),
+               let c = Color(hex: hex) {
+                return c
+            }
+            return Tokens.Brand.indigo
+        }
+        set {
+            UserDefaults.standard.set(newValue.hexString, forKey: accentKey)
         }
     }
+}
 
-    private init() {
-        if let hex = UserDefaults.standard.string(forKey: Self.accentKey),
-           let c = Color(hex: hex) {
-            self.accent = c
-        } else {
-            self.accent = Tokens.Brand.indigo
-        }
+/// Property wrapper that reads `LumeTheme.accentKey` from UserDefaults via
+/// `@AppStorage` and returns it as a `Color`. Adopting `DynamicProperty`
+/// lets SwiftUI observe the underlying storage and re-render the host view
+/// whenever the value changes — no `@Observable` plumbing needed.
+@MainActor
+@propertyWrapper
+struct LumeAccent: DynamicProperty {
+    @AppStorage(LumeTheme.accentKey) private var hex: String = LumeTheme.defaultHex
+
+    var wrappedValue: Color {
+        Color(hex: hex) ?? Tokens.Brand.indigo
+    }
+
+    /// Two-way `Binding<Color>` for callers that need to drive a
+    /// `ColorPicker`. Reading uses the same hex storage; writing converts
+    /// the new colour back to a hex string and writes it through.
+    var projectedValue: Binding<Color> {
+        Binding(
+            get: { Color(hex: hex) ?? Tokens.Brand.indigo },
+            set: { hex = $0.hexString }
+        )
     }
 }
 
@@ -41,8 +64,6 @@ extension Color {
         self = Color(red: r, green: g, blue: b)
     }
     var hexString: String {
-        // Best-effort serialization; falls back to "#7A70FF" if the system
-        // can't resolve the components (e.g. dynamic colour).
         #if canImport(AppKit)
         if let c = NSColor(self).usingColorSpace(.sRGB) {
             return String(format: "#%02X%02X%02X",
@@ -51,6 +72,6 @@ extension Color {
                           Int(c.blueComponent * 255))
         }
         #endif
-        return "#7A70FF"
+        return LumeTheme.defaultHex
     }
 }

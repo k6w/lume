@@ -3,7 +3,7 @@ import Charts
 import GRDB
 
 struct StatsView: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     let environment: AppEnvironment
     @State private var totals: Totals = .empty
     @State private var byDay: [DayBucket] = []
@@ -38,7 +38,7 @@ struct StatsView: View {
                             x: .value("Day", bucket.date, unit: .day),
                             y: .value("Clips", bucket.count)
                         )
-                        .foregroundStyle(theme.accent)
+                        .foregroundStyle(accent)
                         .cornerRadius(2)
                     }
                     .frame(height: 180)
@@ -112,7 +112,7 @@ struct StatsView: View {
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4).fill(.quaternary)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(theme.accent)
+                        .fill(accent)
                         .frame(width: geo.size.width * frac)
                 }
             }

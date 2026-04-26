@@ -3,10 +3,6 @@ import SwiftUI
 @MainActor
 struct MainWindowRoot: View {
     let environment: AppEnvironment
-    /// We hold a direct reference to the theme singleton so the body can
-    /// inject it into the env tree below; descendants then read it via
-    /// `@Environment(LumeTheme.self)`.
-    private let theme = LumeTheme.shared
     @State private var selection: SidebarItem = .all
     @State private var query: String = ""
     @State private var focusedClipID: String?
@@ -15,11 +11,6 @@ struct MainWindowRoot: View {
     @State private var tagObservationTask: Task<Void, Never>?
 
     var body: some View {
-        rootContent
-            .environment(theme)
-    }
-
-    private var rootContent: some View {
         NavigationSplitView {
             Sidebar(selection: $selection)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 260)

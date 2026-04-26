@@ -5,12 +5,12 @@ import SwiftUI
 /// breadth for relevance — the symbols here are the ones people actually
 /// reach for when bucketing clips (work / code / comm / time / misc).
 struct SFSymbolPicker: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     @Binding var selection: String
     /// Accent override; nil falls back to the env theme accent so callers
     /// don't need to pass anything in the common case.
     var tint: Color? = nil
-    private var effectiveTint: Color { tint ?? theme.accent }
+    private var effectiveTint: Color { tint ?? accent }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 8)
 

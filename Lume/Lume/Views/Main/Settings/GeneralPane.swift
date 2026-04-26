@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 struct GeneralPane: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     let environment: AppEnvironment
 
     @AppStorage("lume.launchAtLogin")  private var launchAtLogin: Bool = true
@@ -14,17 +14,6 @@ struct GeneralPane: View {
         PopoverStyle(rawValue: popoverStyleRaw) ?? .default
     }
 
-    /// Two-way bridge between SwiftUI's ColorPicker and the Observable
-    /// LumeTheme singleton. Mutating this binding directly updates the
-    /// theme; every view in the tree re-renders the moment the user
-    /// drags the picker.
-    private var accentBinding: Binding<Color> {
-        Binding(
-            get: { theme.accent },
-            set: { theme.accent = $0 }
-        )
-    }
-
     var body: some View {
         Form {
             Section("Behavior") {
@@ -33,9 +22,12 @@ struct GeneralPane: View {
                 Toggle("Show Lume in the Dock", isOn: $showInDock)
             }
             Section("Appearance") {
-                ColorPicker("Accent", selection: accentBinding, supportsOpacity: false)
+                // `$accent` is the projectedValue from @LumeAccent — a
+                // Binding<Color> that writes back through the same
+                // UserDefaults key every other view observes.
+                ColorPicker("Accent", selection: $accent, supportsOpacity: false)
                 Button("Reset to default") {
-                    theme.accent = Tokens.Brand.indigo
+                    LumeTheme.accent = Tokens.Brand.indigo
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.small)

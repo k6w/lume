@@ -12,7 +12,7 @@ import GRDB
 /// `@Binding`s so the hoisted toolbar (Copy + Search) stays in sync
 /// across every tab.
 struct HistoryBrowser: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     let environment: AppEnvironment
     let scope: SidebarItem
     @Binding var query: String
@@ -213,14 +213,14 @@ struct HistoryBrowser: View {
 }
 
 private struct ClipListItem: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     let clip: Clip
 
     var body: some View {
         HStack(alignment: .top, spacing: Tokens.Spacing.m) {
             Image(systemName: clip.kind.sfSymbol)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(theme.accent)
+                .foregroundStyle(accent)
                 .frame(width: 24, height: 24)
             VStack(alignment: .leading, spacing: 2) {
                 ClipPreview(clip: clip, compact: true)
@@ -231,7 +231,7 @@ private struct ClipListItem: View {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
                     .rotationEffect(.degrees(45))
-                    .foregroundStyle(theme.accent)
+                    .foregroundStyle(accent)
             }
         }
         .padding(.vertical, 4)

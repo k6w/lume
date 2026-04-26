@@ -425,11 +425,27 @@
           </dd>
         </div>
 
+        <div class="spec new">
+          <dt>custom&nbsp;hotkey</dt>
+          <dd>
+            Click-to-record field in Settings → Hot Keys.
+            <span class="sub">NSEvent local monitor captures the chord; persisted as JSON; re-registered through Carbon. Default ⌥⌘V.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>popover&nbsp;style</dt>
+          <dd>
+            Default (two-line) or Minimal (single-line, hover reveals meta).
+            <span class="sub">Toggle in Settings → General.</span>
+          </dd>
+        </div>
+
         <div class="spec">
           <dt>keyboard</dt>
           <dd>
             ⌘1–9 quick-paste in popover. ⌘N new snippet. ⌘ , Settings.
-            <span class="sub">Carbon RegisterEventHotKey for the global ⌥⌘V. Sandbox-OK.</span>
+            <span class="sub">Carbon RegisterEventHotKey for the global hotkey. Sandbox-OK.</span>
           </dd>
         </div>
 

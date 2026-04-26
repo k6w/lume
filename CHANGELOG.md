@@ -6,121 +6,90 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added — v0.2 work
-
-#### Smart filters
-- New **URLs** sidebar entry, computed at filter time via
-  `NSDataDetector` (`.link` minus `mailto:`).
-- New **Emails** entry — `NSDataDetector` is too eager (it returns
-  emails as `mailto:` links), so we use a tight regex.
-- New **Today** and **This Week** date-bucketed filters.
-
-#### Quick transforms
-- One-click **lowercase**, **uppercase**, **trim**, **JSON pretty**,
-  **base64 encode/decode**, **URL encode/decode** in the detail pane.
-  Each transform is gated on `applies(to:)` so the chip only appears
-  when meaningful (e.g. JSON pretty hides if the text doesn't start with
-  `{` or `[`). The transformed result is copied **and** persisted back
-  to history.
-
-#### Tags
-- New `TagRepository` with full CRUD + clip-tag link CRUD.
-- **Settings → Tags** pane to add/rename/delete tags and pick colors.
-- Tag chips in the detail pane with an **Add Tag** menu listing
-  unassigned tags.
-- Foreign-key cascade cleans up `clip_tag` rows when a tag is deleted.
-
-#### Snippets
-- Monospace `TextEditor` with optional shortcut field.
-- New `SnippetExpander` for `{{date}}` `{{time}}` `{{datetime}}`
-  `{{clipboard}}` variables.
-- **Snippets** sub-menu in the popover footer for paste-without-
-  opening-main.
-- ⌘N shortcut opens new-snippet sheet.
-
-#### Detail pane
-- **Inline edit mode**: TextEditor + Save & Copy, persists as a new
-  history entry rather than mutating the original.
-- **Smart actions**: Open URL · Email · Reveal in Finder, surfaced
-  when the clip content matches.
-- **Text stats**: chars · words · lines.
-- **Source-app icon**: resolved from bundle id via `NSWorkspace`,
-  cached, surfaced in row meta and the metadata block.
-- **File staleness banner**: a warning marker in row meta + a banner
-  in the detail pane when any path in a file clip has moved or been
-  deleted.
-
-#### Capture
-- File clips: only the path string is stored — no file body.
-- File paste: `PasteInjector` writes file URLs only for paths that still
-  exist; falls back to plain text otherwise.
-- Per-kind capture toggle: **Images** opt-in (default off) under
-  Settings → Data. The Sidebar's **Images** filter only shows when on.
-- **Per-kind retention windows**: text/colors (default 30 d), images
-  (7 d), files (14 d). `PurgeScheduler` reads `CaptureSettings`
-  every tick.
-
-#### UI
-- Toolbar **hoisted to MainWindow** with **Copy** + native
-  `NSSearchField` at `.navigation` placement. Identical on every tab —
-  no more height jumps when switching between History and Settings.
-- **`NSSearchField` via `NSViewRepresentable`** instead of `.searchable`
-  (which caused the toolbar to grow/shrink).
-- **Capture toast** (subtle in-popover flash when something new lands).
-- ⌘1–9 quick-paste in popover; arrow-key nav already in place.
-- ⌘ , in the menu-bar context menu.
-- New `EmptyStateView` with per-scope nudges.
-- New `AppIconView` (async, cached) for source app icons.
-- New `ThumbView` (off-main image decode + cached `Image`) so image-
-  heavy lists don't lag.
-
-#### Stats
-- **Swift Charts** per-day capture chart for last 30 days.
-- Storage tile (sum of `byteSize`).
-- Top apps with their resolved icons.
-
-#### Bulk ops
-- **Compact database (VACUUM)** in Settings → Data.
-- **Clear all unpinned clips** with native confirmation alert.
-
-#### Tests
-- 29 unit tests pass. New suites: `TextDetectorTests`,
-  `SnippetExpanderTests`, `TagRepositoryTests`, `PerKindRetentionTests`,
-  `FileStalenessTests`.
+### Added
+- **Custom hotkey recorder** in Settings → Hot Keys. Click the recorder,
+  press the chord; the new shortcut is registered globally and persisted
+  to UserDefaults as JSON. Reset button falls back to ⌥⌘V.
+- **Seven-step onboarding** (was four): Welcome, Capture, Find, Tags,
+  Snippets, Hot key (live recorder), Done. Each step has a glass demo
+  card showing what the feature actually looks like in the app, the
+  step indicator animates the active capsule, and Skip is now offered
+  on the first screen for power users who already know the drill.
+- **Tag filter in toolbar** (`.navigation` placement): All Tags /
+  Untagged / per-tag, each rendered with its own SF Symbol and color.
+  Composes with the sidebar scope and the search query.
+- **Update banner X button** dismisses per-version instantly (was
+  silent). `UpdateChecker.dismissedVersion` is now a tracked stored
+  property mirrored to UserDefaults.
+- **Real macOS app icon**: `assets/app-icon.svg` is a white squircle
+  with a deep ink L and a single indigo spark. `scripts/generate-icons.sh`
+  rasterises every macOS slot via `rsvg-convert`. The next .dmg ships
+  with a proper Lume icon.
+- **Tag editor sheet** with a curated ~80-icon SF Symbol grid, color
+  picker, and a header preview that updates as you pick. Migration v2
+  adds `tag.icon`. The detail-pane "Add Tag" menu now has a "New Tag…"
+  entry so creating + applying happens in one click.
+- **Popover style** preference (Settings → General): **Default** is
+  the two-line row; **Minimal** is single-line with the source-app icon
+  on the right and meta + pin revealed on hover.
+- **Inline transforms**: lowercase / uppercase / trim / JSON pretty /
+  base64 ↔ / URL ↔ now show their result in a card under the body
+  with **Copy** + **Dismiss**, instead of creating a new history
+  entry. Result card uses monospace for JSON/base64.
+- **Smart filters**: URLs / Emails / Today / This Week sidebar entries.
+- **Snippets** — variables (`{{date}}`, `{{time}}`, `{{datetime}}`,
+  `{{clipboard}}`); monospace editor; visible Edit/Delete on hover;
+  popover footer Snippets sub-menu; live observation across the app.
 
 ### Changed
-- **Click model**: instant. Single click opens the popover with no
-  delay. The previous "delayed discrimination" double-click model is
-  gone — main window opens via popover footer or right-click menu.
-- **Code as a separate kind**: removed from the sidebar. Code-looking
-  text is now indistinguishable from text in the UI; the enum case
-  remains for forward compat.
-- `AppDatabase.inMemory()` uses a per-test temp file (DatabasePool can't
-  enable WAL on `:memory:`).
-- Sensitivity entropy threshold lowered from 4.5 → 4.0 (= log₂(16)) so
-  16-char generated secrets cross the line.
-- Settings switched from a custom segmented Picker / nested
-  `NavigationSplitView` to a clean **`HSplitView` + sidebar
-  `List(selection:)`** to fix the Settings-was-empty regression.
+- **Theme propagation**: switched from `@Observable LumeTheme` +
+  `@Environment` (which didn't reliably cross between independent
+  `NSHostingController`s) to a `@LumeAccent` property wrapper backed by
+  `@AppStorage`. UserDefaults broadcasts process-wide, so the popover,
+  main window, settings, and onboarding all repaint the moment the
+  picker fires. The static `LumeTheme.accent` setter still works for
+  AppKit code (e.g. the Reset button).
+- **Main window is view-only**. Removed double-click-paste; the toolbar
+  Copy and the detail-pane Copy stay as the only explicit ways to
+  put a clip back on the pasteboard. Right-click context menu loses
+  Paste.
+- **Self-recapture suppressed**: `PasteInjector.ownedChangeCount`
+  records every write; `PasteboardWatcher.tick` skips ticks Lume
+  itself caused. Pasting from the popover no longer bumps `hitCount`
+  or resets `lastSeenAt` for the clip you just clicked.
+- **Click model**: instant single-click in the popover. Removed the
+  delayed-discrimination double-click that introduced perceived lag.
+  Main window opens via popover footer or right-click menu.
+- **Settings layout**: replaced the broken nested `NavigationSplitView`
+  with `HSplitView` + native sidebar `List(selection:)`. Tabs render
+  at full size on every screen.
+- **Per-kind retention**: text/colors (default 30 d), images (7 d),
+  files (14 d). Configurable in Settings → Data.
+- **Image capture is opt-in**. File-path captures store only the path
+  string; stale paths flagged inline; paste falls back to plain text
+  if the file moved.
+- **Settings tabs**: General / Privacy / Tags / Hot Keys / Data & iCloud
+  via plain `List(selection:)` + `Form`.
+- **Top margin** under the popover divider so the first row no longer
+  kisses the search field.
 
 ### Fixed
 - `CKContainer(identifier:)` traps when the iCloud entitlement is
-  missing — sync engine now defers container creation and short-
-  circuits gracefully on local builds without an Apple Developer team.
+  missing — sync engine defers container creation and short-circuits
+  gracefully on local builds without an Apple Developer team.
 - `readObjects(forClasses: [NSURL.self]) as? [URL]` cast was
-  unreliable; replaced with explicit `NSURL → URL` bridging via
-  `compactMap`.
-- `Timer` callbacks into `@MainActor` methods now wrap in
-  `Task { @MainActor in ... }`.
-- Tests target now generates its Info.plist via project config
-  (`GENERATE_INFOPLIST_FILE: YES`).
+  unreliable; replaced with explicit `NSURL → URL` bridging.
+- Color-picker change didn't propagate across views.
+- `Purge now` was silent — now reports the row count via a native
+  `NSAlert` and runs `VACUUM` afterwards.
+- Snippets created in the main window didn't appear in the popover
+  Snippets menu (now driven by `ValueObservation`).
+- AppIcon set was empty, so the .dmg shipped with a blank tile.
 
-## [0.1.0] — 2026-04-26
+## [0.2.0] — 2026-04-26
 
-### Added
-- Initial scaffolding: branding, Xcode project, persistence, services,
-  Liquid Glass UI, onboarding, CloudKit sync wiring, performance
-  budgets and tests.
+First public release. See the release notes for what shipped in v0.2
+versus what's queued for later.
 
-[Unreleased]: https://github.com/k6w/lume/compare/v0.1.0...HEAD
-[0.1.0]:      https://github.com/k6w/lume/releases/tag/v0.1.0
+[Unreleased]: https://github.com/k6w/lume/compare/v0.2.0...HEAD
+[0.2.0]:      https://github.com/k6w/lume/releases/tag/v0.2.0

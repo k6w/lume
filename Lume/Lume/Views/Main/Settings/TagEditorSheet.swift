@@ -4,7 +4,7 @@ import SwiftUI
 /// Presented from Settings → Tags and from the detail pane "New Tag…"
 /// menu item, so users can spin up a tag from wherever they are.
 struct TagEditorSheet: View {
-    @Environment(LumeTheme.self) private var theme
+    @LumeAccent private var accent
     @State var draft: Tag
     var title: String = "New Tag"
     var onSave: (Tag) -> Void
@@ -22,7 +22,7 @@ struct TagEditorSheet: View {
         self.onSave = onSave
         self.onCancel = onCancel
         // The theme env isn't readable from init, so we fall back to the
-        // brand default and let `body` swap to `theme.accent` on first
+        // brand default and let `body` swap to `accent` on first
         // appear if the caller didn't supply a color.
         let resolved = Color(hex: tag.colorHex ?? "") ?? Tokens.Brand.indigo
         self._color = State(initialValue: resolved)

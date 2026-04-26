@@ -65,7 +65,7 @@ your menu bar.
 | **Plain-text paste** | Strip formatting from any rich-text clip via context menu. |
 | **Snippets** | Saved boilerplate with variables: `{{date}}` `{{time}}` `{{datetime}}` `{{clipboard}}`. Insert from a menu in the popover footer or the **Snippets** tab. |
 | **Tags** | Manage colored tags in Settings → Tags. Apply/remove from the detail pane. |
-| **Global hotkey** | Default ⌥⌘V to summon the popover from anywhere. Configurable in v0.2. |
+| **Global hotkey** | Default ⌥⌘V to summon the popover from anywhere. **Customisable** in Settings → Hot Keys via a click-to-record field. |
 
 ### Live with it
 | | |
@@ -74,7 +74,9 @@ your menu bar.
 | **iCloud sync** | Backup and sync via your private CloudKit container. Lume has no servers. Disabled gracefully when there's no iCloud entitlement. |
 | **Bulk maintenance** | Settings → Data → **Compact database (VACUUM)** and **Clear all unpinned** with a confirmation alert. |
 | **Stats** | Per-day capture chart for the last 30 days (Swift Charts), top apps with their icons, top kinds, storage used. |
-| **Onboarding** | Four-step welcome on first launch. |
+| **Onboarding** | Seven-step welcome on first launch — Welcome, Capture, Find, Tags, Snippets, Hot key, Done. Each step shows a glass demo card. |
+| **Custom accent** | Settings → General → Appearance. Picks any color; propagates to every surface (popover, main window, onboarding, charts) instantly. |
+| **Popover style** | Default or Minimal layouts in Settings → General. |
 | **Native macOS** | `NSStatusItem`, `NSSearchField`, `List(selection:)`, `Form` — built with the system's components, not custom skins. |
 
 ## Install
