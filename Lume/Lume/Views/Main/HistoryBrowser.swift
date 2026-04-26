@@ -24,6 +24,7 @@ struct HistoryBrowser: View {
     @State private var observationTask: Task<Void, Never>?
     @State private var tagsByClip: [String: Set<String>] = [:]
     @State private var tagsObservationTask: Task<Void, Never>?
+    @FocusState private var listFocused: Bool
 
     var body: some View {
         HSplitView {
@@ -50,31 +51,79 @@ struct HistoryBrowser: View {
             if filtered.isEmpty {
                 emptyState
             } else {
-                List(filtered, id: \.id, selection: $selection) { clip in
-                    ClipListItem(clip: clip)
-                        .tag(clip.id)
-                        .listRowSeparator(.hidden)
-                        .contextMenu {
-                            Button("Copy") {
-                                environment.pasteInjector.copy(clip)
-                            }
-                            Button("Copy as Plain Text") {
-                                environment.pasteInjector.copyAsPlainText(clip)
-                            }
-                            Button(clip.isPinned ? "Unpin" : "Pin") { pin(clip) }
-                            Divider()
-                            Button(role: .destructive) { delete(clip) } label: {
-                                Text("Delete")
+                ScrollViewReader { proxy in
+                    List {
+                        ForEach(filtered, id: \.id) { clip in
+                            row(clip)
+                        }
+                    }
+                    .listStyle(.inset)
+                    .focusable()
+                    .focused($listFocused)
+                    .onAppear { listFocused = true }
+                    .onKeyPress(.upArrow)   { move(by: -1, proxy: proxy); return .handled }
+                    .onKeyPress(.downArrow) { move(by:  1, proxy: proxy); return .handled }
+                    .onChange(of: selection) { _, newID in
+                        if let id = newID {
+                            withAnimation(.easeInOut(duration: 0.12)) {
+                                proxy.scrollTo(id, anchor: .center)
                             }
                         }
-                        // No tap gestures here — the main window is for
-                        // viewing and organizing. Use the popover or the
-                        // toolbar Copy button to put a clip back on the
-                        // pasteboard.
+                    }
                 }
-                .listStyle(.inset)
             }
         }
+    }
+
+    @ViewBuilder
+    private func row(_ clip: Clip) -> some View {
+        let isSelected = selection == clip.id
+        Button {
+            selection = clip.id
+        } label: {
+            ClipListItem(clip: clip)
+                .foregroundStyle(isSelected ? AnyShapeStyle(accent) : AnyShapeStyle(.primary))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .id(clip.id)
+        .listRowSeparator(.hidden)
+        .listRowBackground(
+            Group {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(accent.opacity(0.22))
+                        .padding(.horizontal, 4)
+                } else {
+                    Color.clear
+                }
+            }
+        )
+        .contextMenu {
+            Button("Copy") { environment.pasteInjector.copy(clip) }
+            Button("Copy as Plain Text") {
+                environment.pasteInjector.copyAsPlainText(clip)
+            }
+            Button(clip.isPinned ? "Unpin" : "Pin") { pin(clip) }
+            Divider()
+            Button(role: .destructive) { delete(clip) } label: {
+                Text("Delete")
+            }
+        }
+    }
+
+    private func move(by offset: Int, proxy: ScrollViewProxy) {
+        let list = filtered
+        guard !list.isEmpty else { return }
+        guard let current = selection,
+              let idx = list.firstIndex(where: { $0.id == current })
+        else {
+            selection = list.first?.id
+            return
+        }
+        let next = max(0, min(list.count - 1, idx + offset))
+        selection = list[next].id
     }
 
     private var detailPane: some View {

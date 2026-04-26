@@ -40,11 +40,22 @@ enum SidebarItem: String, Hashable, CaseIterable, Identifiable {
 /// headers and the sidebar material) but doesn't hand selection to the
 /// system. Each row is a `Button` that updates the parent's binding —
 /// the native selection rectangle never appears, so our accent
-/// `.listRowBackground` is the *only* highlight you see.
+/// `.listRowBackground` is the *only* highlight you see. Arrow-key
+/// navigation is implemented by hand against `visibleItems`.
 struct Sidebar: View {
     @LumeAccent private var accent
     @Binding var selection: SidebarItem
     @AppStorage(CaptureSettings.Key.captureImages.rawValue) private var captureImages: Bool = false
+    @FocusState private var focused: Bool
+
+    private var visibleItems: [SidebarItem] {
+        var items: [SidebarItem] = [.all, .pinned,
+                                    .urls, .emails, .today, .thisWeek,
+                                    .files, .colors]
+        if captureImages { items.append(.images) }
+        items += [.snippets, .stats, .settings]
+        return items
+    }
 
     var body: some View {
         List {
@@ -72,6 +83,28 @@ struct Sidebar: View {
             }
         }
         .listStyle(.sidebar)
+        .focusable()
+        .focused($focused)
+        .onAppear { focused = true }
+        // Arrow-key nav: List handles this for free when you give it a
+        // `selection:` binding — but that brings back the native red
+        // selection rect we worked so hard to remove. Reimplement here.
+        .onKeyPress(.upArrow) {
+            move(by: -1); return .handled
+        }
+        .onKeyPress(.downArrow) {
+            move(by: 1); return .handled
+        }
+    }
+
+    private func move(by offset: Int) {
+        let items = visibleItems
+        guard let idx = items.firstIndex(of: selection) else {
+            selection = items.first ?? .all
+            return
+        }
+        let next = max(0, min(items.count - 1, idx + offset))
+        selection = items[next]
     }
 
     @ViewBuilder
