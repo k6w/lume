@@ -1,0 +1,11 @@
+// Local-build config. Uses the entitlement-free local file so the app
+// runs on a machine without an Apple Developer account.
+// Override CODE_SIGN_ENTITLEMENTS in your own xcconfig if you want
+// CloudKit/Keychain group/iCloud Drive — those need a paid team.
+CODE_SIGN_ENTITLEMENTS = Lume/Lume.local.entitlements
+PRODUCT_BUNDLE_IDENTIFIER = app.lume.Lume
+DEVELOPMENT_TEAM =
+CODE_SIGN_IDENTITY = -
+CODE_SIGNING_REQUIRED = NO
+CODE_SIGNING_ALLOWED = YES
+ENABLE_HARDENED_RUNTIME = NO

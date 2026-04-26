@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" width="760" height="200" role="img" aria-label="Lume">
+  <title>Lume</title>
+  <defs>
+    <linearGradient id="wm-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1C26"/>
+      <stop offset="100%" stop-color="#0E0F14"/>
+    </linearGradient>
+    <radialGradient id="wm-spark" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!--
+    Mark: 160×160, vertically centered in the 200-px-tall canvas (top = 20, bottom = 180).
+    The viewBox source is 256, so scale = 160/256 = 0.625.
+  -->
+  <g transform="translate(20 20) scale(0.625)">
+    <rect x="14" y="14" width="228" height="228" rx="58" fill="url(#wm-tile)"/>
+    <rect x="14.75" y="14.75" width="226.5" height="226.5" rx="57.25"
+          fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="1.5"/>
+    <g fill="#F4F1FF">
+      <rect x="78" y="60" width="24" height="132" rx="12"/>
+      <rect x="78" y="168" width="108" height="24" rx="12"/>
+    </g>
+    <circle cx="186" cy="180" r="22" fill="url(#wm-spark)"/>
+  </g>
+
+  <!--
+    Wordmark "lume". Font-size 112; cap-height ≈ 0.7 em → ~78. We want the
+    block (cap-top → baseline) to vertically centre on the canvas mid-line
+    (y = 100). Cap-top = 100 - 78/2 = 61. Baseline = 100 + 78/2 = 139.
+    The dominant-baseline trick avoids fragile maths if a renderer uses
+    different metrics; we set both to be safe.
+  -->
+  <text x="208" y="100"
+        fill="#0E0F14"
+        font-family="-apple-system, 'SF Pro Rounded', 'SF Pro', Inter, system-ui, sans-serif"
+        font-weight="600"
+        font-size="112"
+        letter-spacing="-3"
+        dominant-baseline="central"
+        text-anchor="start">lume</text>
+</svg>

@@ -1,0 +1,113 @@
+name: Lume
+options:
+  bundleIdPrefix: app.lume
+  deploymentTarget:
+    macOS: "26.0"
+  developmentLanguage: en
+  groupSortPosition: bottom
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: NO
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGNING_ALLOWED: YES
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    GENERATE_INFOPLIST_FILE: NO
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "6.29.0"
+
+targets:
+  Lume:
+    type: application
+    platform: macOS
+    sources:
+      - path: Lume
+        excludes:
+          - "Resources/Info.plist"
+          - "Lume.entitlements"
+          - "Lume.local.entitlements"
+    resources:
+      - Lume/Resources/Assets.xcassets
+    info:
+      path: Lume/Resources/Info.plist
+      properties:
+        CFBundleName: Lume
+        CFBundleDisplayName: Lume
+        CFBundleIdentifier: app.lume.Lume
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSUIElement: true
+        NSHumanReadableCopyright: "© 2026 Lume contributors. MIT licensed."
+        NSPasteboardUsageDescription: "Lume reads the clipboard so it can give you a searchable history."
+        NSAppleEventsUsageDescription: "Lume can send a paste keystroke (⌘V) to the app you choose."
+        NSSupportsAutomaticTermination: false
+        NSSupportsSuddenTermination: false
+        ITSAppUsesNonExemptEncryption: false
+    configFiles:
+      Debug: Lume/Configs/Local.xcconfig
+      Release: Lume/Configs/Local.xcconfig
+    dependencies:
+      - package: GRDB
+
+  LumeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [LumeTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.lume.LumeTests
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - target: Lume
+
+  LumeBenchmarks:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [LumeBenchmarks]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.lume.LumeBenchmarks
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - target: Lume
+
+schemes:
+  Lume:
+    build:
+      targets:
+        Lume: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - LumeTests
+    archive:
+      config: Release
+
+  LumeBenchmarks:
+    build:
+      targets:
+        LumeBenchmarks: all
+    test:
+      config: Release
+      targets:
+        - LumeBenchmarks

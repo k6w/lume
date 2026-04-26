@@ -1,0 +1,7 @@
+<!-- L glyph only, no tile. Uses currentColor so callers can tint via CSS. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Lume glyph" fill="currentColor">
+  <title>Lume</title>
+  <rect x="78" y="60" width="24" height="132" rx="12"/>
+  <rect x="78" y="168" width="108" height="24" rx="12"/>
+  <circle cx="186" cy="180" r="10" />
+</svg>

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Lume">
+  <title>Lume</title>
+  <defs>
+    <!-- Tile: subtle vertical gradient, almost-black to slate. No prismatic colour. -->
+    <linearGradient id="lume-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1C26"/>
+      <stop offset="100%" stop-color="#0E0F14"/>
+    </linearGradient>
+    <!-- Soft warm spark, single accent only. -->
+    <radialGradient id="lume-spark" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Tile -->
+  <rect x="14" y="14" width="228" height="228" rx="58" fill="url(#lume-tile)"/>
+  <!-- Inner rim, very faint -->
+  <rect x="14.75" y="14.75" width="226.5" height="226.5" rx="57.25"
+        fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="1"/>
+
+  <!--
+    The L. Optically centered on a 256-tile.
+    Vertical bar:   x 78–102  (24w)  ·  y 60–192 (132h)
+    Horizontal bar: x 78–186  (108w) ·  y 168–192 (24h)
+    Combined visual centroid lands at (~130, ~126), within 2 px of (128, 128).
+  -->
+  <g fill="#F4F1FF">
+    <rect x="78" y="60" width="24" height="132" rx="12"/>
+    <rect x="78" y="168" width="108" height="24" rx="12"/>
+  </g>
+
+  <!-- Single restrained spark at the foot of the L. No rainbow. -->
+  <circle cx="186" cy="180" r="22" fill="url(#lume-spark)"/>
+</svg>

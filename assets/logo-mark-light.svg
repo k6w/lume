@@ -1,0 +1,25 @@
+<!-- Light tile variant of the mark. For dark backgrounds where the dark
+     tile would disappear. The L is dark on a soft off-white tile. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Lume">
+  <title>Lume</title>
+  <defs>
+    <linearGradient id="lume-tile-light" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBFAFF"/>
+      <stop offset="100%" stop-color="#E9E6F2"/>
+    </linearGradient>
+    <radialGradient id="lume-spark-light" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#6E63FF" stop-opacity="0.55"/>
+      <stop offset="60%"  stop-color="#6E63FF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#6E63FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="14" y="14" width="228" height="228" rx="58" fill="url(#lume-tile-light)"/>
+  <rect x="14.75" y="14.75" width="226.5" height="226.5" rx="57.25"
+        fill="none" stroke="#0E0F14" stroke-opacity="0.10" stroke-width="1"/>
+  <g fill="#0E0F14">
+    <rect x="78" y="60" width="24" height="132" rx="12"/>
+    <rect x="78" y="168" width="108" height="24" rx="12"/>
+  </g>
+  <circle cx="186" cy="180" r="22" fill="url(#lume-spark-light)"/>
+</svg>

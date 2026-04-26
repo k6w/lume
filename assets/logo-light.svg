@@ -1,0 +1,35 @@
+<!-- Wordmark on dark backgrounds. Light mark, light type. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" width="760" height="200" role="img" aria-label="Lume">
+  <title>Lume</title>
+  <defs>
+    <linearGradient id="wm-tile-light" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1F2230"/>
+      <stop offset="100%" stop-color="#14151D"/>
+    </linearGradient>
+    <radialGradient id="wm-spark-light" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g transform="translate(20 20) scale(0.625)">
+    <rect x="14" y="14" width="228" height="228" rx="58" fill="url(#wm-tile-light)"/>
+    <rect x="14.75" y="14.75" width="226.5" height="226.5" rx="57.25"
+          fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="1.5"/>
+    <g fill="#F4F1FF">
+      <rect x="78" y="60" width="24" height="132" rx="12"/>
+      <rect x="78" y="168" width="108" height="24" rx="12"/>
+    </g>
+    <circle cx="186" cy="180" r="22" fill="url(#wm-spark-light)"/>
+  </g>
+
+  <text x="208" y="100"
+        fill="#F4F1FF"
+        font-family="-apple-system, 'SF Pro Rounded', 'SF Pro', Inter, system-ui, sans-serif"
+        font-weight="600"
+        font-size="112"
+        letter-spacing="-3"
+        dominant-baseline="central"
+        text-anchor="start">lume</text>
+</svg>

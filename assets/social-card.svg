@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Lume — A clipboard, lit.">
+  <title>Lume — A clipboard, lit.</title>
+  <defs>
+    <!-- Page background: deep slate, single subtle radial highlight. -->
+    <radialGradient id="bg" cx="0.5" cy="0.42" r="0.7">
+      <stop offset="0%" stop-color="#1A1C26"/>
+      <stop offset="100%" stop-color="#0A0B11"/>
+    </radialGradient>
+
+    <linearGradient id="sc-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1A1C26"/>
+      <stop offset="100%" stop-color="#0E0F14"/>
+    </linearGradient>
+    <radialGradient id="sc-spark" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!--
+    Mark: scale 1.0 from a 256-source → 256 wide. Centred horizontally:
+    x = (1200 - 256) / 2 = 472. Vertically: top = 130, bottom = 386.
+    Below it: wordmark (96 px) centred at x = 600, baseline ~480.
+    Tagline (26 px) baseline ~530. Plenty of breathing room above and below.
+  -->
+  <g transform="translate(472 130)">
+    <rect x="14" y="14" width="228" height="228" rx="58" fill="url(#sc-tile)"/>
+    <rect x="14.75" y="14.75" width="226.5" height="226.5" rx="57.25"
+          fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="1"/>
+    <g fill="#F4F1FF">
+      <rect x="78" y="60" width="24" height="132" rx="12"/>
+      <rect x="78" y="168" width="108" height="24" rx="12"/>
+    </g>
+    <circle cx="186" cy="180" r="22" fill="url(#sc-spark)"/>
+  </g>
+
+  <text x="600" y="480"
+        text-anchor="middle"
+        fill="#F4F1FF"
+        font-family="-apple-system, 'SF Pro Rounded', Inter, system-ui, sans-serif"
+        font-weight="700"
+        font-size="96"
+        letter-spacing="-2.5"
+        dominant-baseline="alphabetic">lume</text>
+
+  <text x="600" y="530"
+        text-anchor="middle"
+        fill="#9690B8"
+        font-family="-apple-system, 'SF Pro', Inter, system-ui, sans-serif"
+        font-weight="500"
+        font-size="26"
+        letter-spacing="0.4"
+        dominant-baseline="alphabetic">A clipboard, lit.</text>
+</svg>

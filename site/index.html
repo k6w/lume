@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lume — A clipboard, lit.</title>
+  <meta name="description" content="A native, open-source macOS clipboard manager built for Liquid Glass. Smart filters. Quick transforms. Snippets. Tags. iCloud sync. Performance budgets enforced by tests." />
+  <meta property="og:title" content="Lume — A clipboard, lit." />
+  <meta property="og:description" content="A native macOS clipboard manager built for Liquid Glass." />
+  <meta property="og:image" content="../assets/social-card.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="../assets/logo-glyph.svg" />
+  <style>
+    :root {
+      --ink:    #07080D;
+      --ink-2:  #11131B;
+      --line:   rgba(255,255,255,0.07);
+      --line-2: rgba(255,255,255,0.14);
+      --bone:   #F4F1FF;
+      --mist:   #9690B8;
+      --mist-2: #6F6A8F;
+      --indigo: #7A70FF;
+      --indigo-soft: rgba(122, 112, 255, 0.16);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--ink);
+      color: var(--bone);
+      font-family: -apple-system, "SF Pro", "SF Pro Text", Inter, system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.01em;
+    }
+    a { color: var(--bone); text-decoration: none; transition: color .15s; }
+    a:hover { color: var(--indigo); }
+    code, .mono { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; }
+
+    /* one soft glow at the top — single accent, restrained */
+    .halo {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 760px;
+      background: radial-gradient(50% 60% at 50% 0%,
+                  rgba(122,112,255,0.18) 0%,
+                  rgba(122,112,255,0.04) 40%,
+                  rgba(122,112,255,0) 75%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 28px;
+      position: relative;
+      z-index: 1;
+    }
+    .container.narrow { max-width: 760px; }
+
+    /* ───── Nav ───── */
+    nav {
+      display: flex; align-items: center; gap: 16px;
+      padding: 22px 0;
+    }
+    nav .brand {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 16px; letter-spacing: -0.4px;
+      color: var(--bone);
+    }
+    nav .brand .glyph { width: 22px; height: 22px; color: var(--bone); }
+    nav .brand .glyph svg { width: 100%; height: 100%; display: block; }
+    nav .ver { color: var(--mist); font-family: ui-monospace, monospace; font-size: 12px; margin-left: 4px; }
+    nav .links { margin-left: auto; display: flex; gap: 26px; font-size: 14px; }
+    nav .links a { color: var(--mist); }
+    nav .links a:hover { color: var(--bone); }
+
+    /* ───── Hero ───── */
+    .hero {
+      padding: 88px 0 120px;
+    }
+    .hero-meta {
+      display: inline-block;
+      color: var(--indigo);
+      font-family: ui-monospace, monospace;
+      font-size: 12.5px;
+      letter-spacing: 0.04em;
+      margin-bottom: 28px;
+      padding: 4px 10px;
+      border: 1px solid rgba(122,112,255,0.32);
+      border-radius: 999px;
+      background: var(--indigo-soft);
+    }
+    .hero h1 {
+      font-size: clamp(48px, 9vw, 116px);
+      font-weight: 600;
+      line-height: 0.98;
+      letter-spacing: -3px;
+      margin: 0 0 24px;
+    }
+    .hero h1 .accent { color: var(--indigo); }
+    .hero p.lede {
+      font-size: clamp(17px, 1.6vw, 22px);
+      color: var(--mist);
+      max-width: 640px;
+      margin: 0 0 36px;
+      line-height: 1.55;
+    }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 20px; border-radius: 10px;
+      background: var(--indigo);
+      color: #fff;
+      font-weight: 600; font-size: 14.5px;
+      transition: filter .15s, transform .15s;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .cta:hover { filter: brightness(1.1); transform: translateY(-1px); color: #fff; }
+    .cta-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 20px; border-radius: 10px;
+      border: 1px solid var(--line-2);
+      color: var(--bone);
+      font-weight: 500; font-size: 14.5px;
+      background: rgba(255,255,255,0.02);
+    }
+    .cta-ghost:hover { background: rgba(255,255,255,0.06); color: var(--bone); }
+    .meta-row {
+      margin-top: 28px;
+      color: var(--mist-2);
+      font-family: ui-monospace, monospace;
+      font-size: 12.5px;
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+    .meta-row span::before {
+      content: "›";
+      color: var(--indigo);
+      margin-right: 6px;
+    }
+
+    /* ───── Section base ───── */
+    section { position: relative; }
+    .section {
+      padding: 80px 0;
+      border-top: 1px solid var(--line);
+    }
+    .section .num {
+      color: var(--indigo);
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-size: clamp(32px, 4.5vw, 56px);
+      font-weight: 600;
+      letter-spacing: -1.6px;
+      line-height: 1.05;
+      margin: 0 0 24px;
+      max-width: 720px;
+    }
+    .section .body {
+      max-width: 660px;
+      color: var(--mist);
+      font-size: 17px;
+      line-height: 1.7;
+    }
+    .section .body p { margin: 0 0 18px; }
+    .section .body strong { color: var(--bone); font-weight: 600; }
+    .section .body code { color: var(--bone); background: var(--ink-2); padding: 1px 6px; border-radius: 4px; font-size: 0.9em; border: 1px solid var(--line); }
+
+    /* ───── Spec list (replaces the card grid) ───── */
+    .spec {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px 36px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .spec:first-of-type { border-top: 1px solid var(--line); }
+    .spec dt {
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      color: var(--mist);
+      letter-spacing: 0.02em;
+      padding-top: 1px;
+    }
+    .spec dd {
+      margin: 0;
+      color: var(--bone);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .spec dd .sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--mist);
+      font-size: 14.5px;
+    }
+    .spec.new dt::after {
+      content: "  · new";
+      color: var(--indigo);
+    }
+
+    /* ───── Numbers ───── */
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 32px;
+    }
+    @media (max-width: 720px) {
+      .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .number {
+      padding: 24px 22px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+    }
+    .number .v {
+      font-size: 36px; font-weight: 600; letter-spacing: -1px;
+      color: var(--bone);
+      line-height: 1;
+    }
+    .number .v small { font-size: 16px; font-weight: 500; color: var(--mist); margin-left: 4px; }
+    .number .l { font-size: 13px; color: var(--mist); margin-top: 8px; font-family: ui-monospace, monospace; }
+
+    /* ───── Quote-ish open-source promise ───── */
+    .promise {
+      padding-left: 20px;
+      border-left: 2px solid var(--indigo);
+      max-width: 660px;
+    }
+    .promise p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--bone);
+      margin: 0 0 16px;
+    }
+    .promise p:last-child { color: var(--mist); font-size: 14.5px; margin-bottom: 0; }
+
+    /* ───── Code blocks ───── */
+    pre {
+      background: var(--ink-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 13.5px;
+      overflow-x: auto;
+      color: #D6D3EE;
+      margin: 0 0 18px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      line-height: 1.6;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 32px 24px;
+      color: var(--mist-2);
+      text-align: center;
+      font-size: 13px;
+    }
+    footer a { color: var(--mist); }
+    footer .row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="halo"></div>
+
+  <div class="container">
+    <nav>
+      <a class="brand" href="#">
+        <span class="glyph">
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+            <rect x="78" y="60" width="24" height="132" rx="12"/>
+            <rect x="78" y="168" width="108" height="24" rx="12"/>
+            <circle cx="186" cy="180" r="10"/>
+          </svg>
+        </span>
+        <span>lume</span>
+        <span class="ver">v0.2</span>
+      </a>
+      <div class="links">
+        <a href="#what">What</a>
+        <a href="#features">Features</a>
+        <a href="#perf">Performance</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/k6w/lume">GitHub</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <span class="hero-meta">native · macos 26 · open source · mit</span>
+      <h1>A clipboard, <span class="accent">lit.</span></h1>
+      <p class="lede">
+        Lume is a native open-source clipboard manager for macOS&nbsp;26.
+        It lives in your menu bar, syncs through your iCloud, and is
+        engineered against performance budgets enforced by tests.
+      </p>
+      <div class="cta-row">
+        <a class="cta" href="https://github.com/k6w/lume/releases/latest">Download</a>
+        <a class="cta-ghost" href="https://github.com/k6w/lume">Source on GitHub</a>
+      </div>
+      <div class="meta-row">
+        <span>cold launch &lt;120ms</span>
+        <span>fts at 100k rows &lt;16ms</span>
+        <span>no telemetry, ever</span>
+      </div>
+    </header>
+  </div>
+
+  <section id="what" class="section">
+    <div class="container narrow">
+      <div class="num">01 / what</div>
+      <h2>A real macOS app, not a port.</h2>
+      <div class="body">
+        <p>
+          Lume is built on Apple's <strong>Liquid Glass</strong> material,
+          drives <strong>SQLite FTS5</strong> for search at 100k+ rows in
+          a single frame, and uses <strong>GRDB</strong> with a 1-writer
+          / 4-reader pool so the popover never waits on a write.
+        </p>
+        <p>
+          It captures text, colors, and file paths by default. Images are
+          opt-in because storing pixel data balloons databases, and
+          we'd rather you decide. Each kind has its own retention window.
+        </p>
+        <p>
+          Sync goes through your <strong>private iCloud database</strong> via
+          a custom CloudKit engine. No Lume servers. No third party. No
+          telemetry. The codebase has one runtime dependency (GRDB) and
+          uses Carbon for the global hotkey because it's the right tool.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="container">
+      <div class="num">02 / features</div>
+      <h2>Dense by design.</h2>
+
+      <dl style="margin: 36px 0 0;">
+
+        <div class="spec">
+          <dt>capture</dt>
+          <dd>
+            Text, RTF, HTML, colors (hex + NSColor), file paths.
+            <span class="sub">RTF and HTML formatted blobs ride alongside plain text so you can paste back with formatting. Paths are stored as strings — no file body.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>smart&nbsp;filters</dt>
+          <dd>
+            URLs, Emails, Today, This Week.
+            <span class="sub">Computed at filter time via NSDataDetector and a tight email regex. No tagging, no setup.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>quick&nbsp;transforms</dt>
+          <dd>
+            lowercase, uppercase, trim, JSON pretty, base64 ↔, URL ↔.
+            <span class="sub">One click in the detail pane. The result is copied <em>and</em> persisted back to history. Each chip only shows when meaningful.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>snippets</dt>
+          <dd>
+            Saved boilerplate with variables: <code>{{date}}</code> <code>{{time}}</code> <code>{{datetime}}</code> <code>{{clipboard}}</code>.
+            <span class="sub">Insert from a menu in the popover footer or the Snippets tab.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>tags</dt>
+          <dd>
+            Color-coded tags managed in Settings → Tags.
+            <span class="sub">Apply or remove from the detail pane. Foreign-key cascade handles deletion cleanly.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>edit&nbsp;mode</dt>
+          <dd>
+            Inline TextEditor on a clip.
+            <span class="sub">Save & Copy persists the edit as a new history entry rather than mutating the original.</span>
+          </dd>
+        </div>
+
+        <div class="spec">
+          <dt>encryption</dt>
+          <dd>
+            Sensitive clips sealed with ChaCha20-Poly1305.
+            <span class="sub">Key lives in iCloud Keychain (kSecAttrSynchronizable=true). Ciphertext can sync; plaintext never does.</span>
+          </dd>
+        </div>
+
+        <div class="spec">
+          <dt>sync</dt>
+          <dd>
+            CloudKit private database, custom zone, change-token delta fetch.
+            <span class="sub">Conflict policy: max(lastSeenAt) for content, max(hitCount), OR(isPinned). Disabled gracefully when the iCloud entitlement is missing.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>retention</dt>
+          <dd>
+            Per-kind windows: text/colors, images, files.
+            <span class="sub">Pinned clips are never purged. Defaults: 30 d / 7 d / 14 d. Bulk Compact and Clear in Settings.</span>
+          </dd>
+        </div>
+
+        <div class="spec">
+          <dt>search</dt>
+          <dd>
+            SQLite FTS5 with unicode61 tokenizer.
+            <span class="sub">Native NSSearchField in the toolbar. Identical placement and height across every tab.</span>
+          </dd>
+        </div>
+
+        <div class="spec">
+          <dt>keyboard</dt>
+          <dd>
+            ⌘1–9 quick-paste in popover. ⌘N new snippet. ⌘ , Settings.
+            <span class="sub">Carbon RegisterEventHotKey for the global ⌥⌘V. Sandbox-OK.</span>
+          </dd>
+        </div>
+
+        <div class="spec new">
+          <dt>stats</dt>
+          <dd>
+            Swift Charts bar chart for the last 30 days. Top apps with their icons.
+            <span class="sub">Storage used. Total / pinned / encrypted counts.</span>
+          </dd>
+        </div>
+
+      </dl>
+    </div>
+  </section>
+
+  <section id="perf" class="section">
+    <div class="container">
+      <div class="num">03 / performance</div>
+      <h2>Budgets, not promises.</h2>
+      <div class="body">
+        <p>
+          Each number below is enforced by a test in the
+          <code>LumeBenchmarks</code> target. CI fails any pull request that
+          regresses a budget by more than 10 %.
+        </p>
+      </div>
+      <div class="numbers">
+        <div class="number"><div class="v">120<small>ms</small></div><div class="l">cold launch</div></div>
+        <div class="number"><div class="v">16<small>ms</small></div><div class="l">fts at 100k rows</div></div>
+        <div class="number"><div class="v">3<small>ms</small></div><div class="l">dedup write</div></div>
+        <div class="number"><div class="v">0.1<small>%</small></div><div class="l">idle cpu</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container narrow">
+      <div class="num">04 / privacy</div>
+      <h2>Open source. No telemetry. Ever.</h2>
+      <div class="promise">
+        <p>
+          Lume reads <code>NSPasteboard.general</code> on a 0.4 s timer and
+          stores everything locally. Nothing leaves your machine unless
+          iCloud Sync is enabled, in which case the only network destination
+          is your own private CloudKit database.
+        </p>
+        <p>
+          No analytics. No remote config. No phone-home of any kind. The
+          source is on GitHub. Read it, fork it, audit it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="section">
+    <div class="container narrow">
+      <div class="num">05 / install</div>
+      <h2>Two ways in.</h2>
+      <div class="body">
+        <p>
+          Lume ships unsigned from GitHub Releases. The first launch
+          needs a Gatekeeper bypass — strip the quarantine flag, or
+          right-click and choose Open.
+        </p>
+      </div>
+
+      <pre><code>xattr -dr com.apple.quarantine /Applications/Lume.app</code></pre>
+
+      <div class="body" style="margin-top: 36px;">
+        <p>Or build from source:</p>
+      </div>
+      <pre><code>git clone https://github.com/k6w/lume.git
+cd lume
+brew install xcodegen
+./scripts/run.sh        # build + launch
+./scripts/run.sh test   # 29 tests, 0 failures</code></pre>
+    </div>
+  </section>
+
+  <footer>
+    <div class="row">
+      <a href="https://github.com/k6w/lume">Source</a>
+      <a href="https://github.com/k6w/lume/issues">Issues</a>
+      <a href="https://github.com/k6w/lume/blob/main/LICENSE">MIT</a>
+      <a href="https://github.com/k6w/lume/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+    <div>© 2026 Lume contributors. Built for macOS 26.</div>
+  </footer>
+</body>
+</html>
