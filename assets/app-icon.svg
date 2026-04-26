@@ -1,0 +1,36 @@
+<!--
+  macOS app icon source. White squircle (matches the system "app card"
+  shape Apple uses) with a deep ink L glyph + a single restrained spark
+  in the brand indigo. Designed at 1024 to match the largest @2x slot;
+  scripts/generate-icons.sh rasterises every smaller size from this.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="app-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1EEF8"/>
+    </linearGradient>
+    <radialGradient id="app-spark" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#7A70FF" stop-opacity="0.55"/>
+      <stop offset="65%"  stop-color="#7A70FF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#7A70FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Squircle background (Apple uses ≈ 22.5% corner radius for app icons;
+       at 1024 that's 230, but we offset 56 of margin so the shape sits in
+       the safe area like other macOS icons.) -->
+  <rect x="56" y="56" width="912" height="912" rx="200" fill="url(#app-bg)"/>
+  <rect x="58" y="58" width="908" height="908" rx="198"
+        fill="none" stroke="#0E0F14" stroke-opacity="0.06" stroke-width="2"/>
+
+  <!-- L glyph: vertical bar 96x528, horizontal bar 432x96. Centred. -->
+  <g fill="#0E0F14">
+    <rect x="312" y="240"  width="96"  height="528" rx="48"/>
+    <rect x="312" y="672"  width="432" height="96"  rx="48"/>
+  </g>
+
+  <!-- Spark at the foot of the L, the only colour in the icon. -->
+  <circle cx="744" cy="720" r="88" fill="url(#app-spark)"/>
+  <circle cx="744" cy="720" r="22" fill="#7A70FF"/>
+</svg>

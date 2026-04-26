@@ -6,6 +6,32 @@ final class TagRepository: @unchecked Sendable {
 
     init(database: AppDatabase) { self.database = database }
 
+    /// Exposes the underlying pool for `ValueObservation.values(in:)`.
+    var pool: DatabasePool { database.pool }
+
+    // MARK: live observations
+
+    /// Every Tag row, sorted by name, observable.
+    func observeAll() -> ValueObservation<ValueReducers.Fetch<[Tag]>> {
+        ValueObservation.tracking { db in
+            try Tag.order(Tag.Columns.name).fetchAll(db)
+        }
+    }
+
+    /// Map of clipID → Set<tagID>, observable. Drives the toolbar tag
+    /// filter and the detail-pane tag chips without N+1 queries.
+    func observeTagsByClip() -> ValueObservation<ValueReducers.Fetch<[String: Set<String>]>> {
+        ValueObservation.tracking { db -> [String: Set<String>] in
+            let rows = try Row.fetchAll(db, sql: "SELECT clipID, tagID FROM clip_tag")
+            var map: [String: Set<String>] = [:]
+            for r in rows {
+                guard let cid: String = r["clipID"], let tid: String = r["tagID"] else { continue }
+                map[cid, default: []].insert(tid)
+            }
+            return map
+        }
+    }
+
     // MARK: tag CRUD
 
     func all() throws -> [Tag] {

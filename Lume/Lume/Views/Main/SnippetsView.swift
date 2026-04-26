@@ -2,6 +2,7 @@ import SwiftUI
 import GRDB
 
 struct SnippetsView: View {
+    @Environment(LumeTheme.self) private var theme
     let environment: AppEnvironment
     @State private var snippets: [Snippet] = []
     @State private var draft: Snippet?
@@ -74,7 +75,7 @@ struct SnippetsView: View {
         let isHovered = hoveredID == snippet.id
         return HStack(spacing: 12) {
             Image(systemName: "text.append")
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
                 .frame(width: 22, height: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(snippet.title).font(.headline)
@@ -152,6 +153,7 @@ struct SnippetsView: View {
 }
 
 private struct SnippetEditor: View {
+    @Environment(LumeTheme.self) private var theme
     @State var snippet: Snippet
     var onSave: (Snippet) -> Void
     var onCancel: () -> Void

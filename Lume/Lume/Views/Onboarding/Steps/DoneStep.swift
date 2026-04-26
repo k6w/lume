@@ -1,12 +1,13 @@
 import SwiftUI
 
 struct DoneStep: View {
+    @Environment(LumeTheme.self) private var theme
     var body: some View {
         VStack(spacing: Tokens.Spacing.l) {
             Spacer(minLength: 0)
             Image(systemName: "sparkles")
                 .font(.system(size: 56, weight: .light))
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
             Text("You're set.")
                 .font(.system(size: 32, weight: .semibold))
             VStack(spacing: 6) {

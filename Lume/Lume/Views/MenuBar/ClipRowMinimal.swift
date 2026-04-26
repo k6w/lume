@@ -5,6 +5,7 @@ import SwiftUI
 /// and the pin button are hidden until hover, so the list reads very
 /// dense at rest.
 struct ClipRowMinimal: View {
+    @Environment(LumeTheme.self) private var theme
     let clip: Clip
     let isHighlighted: Bool
     var onPaste: () -> Void
@@ -35,7 +36,7 @@ struct ClipRowMinimal: View {
         .overlay {
             if isHighlighted {
                 RoundedRectangle(cornerRadius: Tokens.Radius.m, style: .continuous)
-                    .stroke(LumeTheme.accent.opacity(0.5), lineWidth: 1)
+                    .stroke(theme.accent.opacity(0.5), lineWidth: 1)
             }
         }
         .contentShape(Rectangle())
@@ -62,14 +63,14 @@ struct ClipRowMinimal: View {
         case .image:
             HStack(spacing: 8) {
                 Image(systemName: "photo")
-                    .foregroundStyle(LumeTheme.accent)
+                    .foregroundStyle(theme.accent)
                 Text("Image · \(ByteCountFormatter.string(fromByteCount: Int64(clip.byteSize), countStyle: .file))")
                     .lineLimit(1)
             }
         case .file:
             HStack(spacing: 8) {
                 Image(systemName: "doc")
-                    .foregroundStyle(LumeTheme.accent)
+                    .foregroundStyle(theme.accent)
                 Text(clip.preview)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -98,7 +99,7 @@ struct ClipRowMinimal: View {
                 Button(action: onPin) {
                     Image(systemName: clip.isPinned ? "pin.fill" : "pin")
                         .font(.caption)
-                        .foregroundStyle(clip.isPinned ? LumeTheme.accent : .secondary)
+                        .foregroundStyle(clip.isPinned ? theme.accent : .secondary)
                         .rotationEffect(.degrees(45))
                 }
                 .buttonStyle(.plain)
@@ -128,7 +129,7 @@ struct ClipRowMinimal: View {
     }
 
     private var rowBackground: Color {
-        if isHighlighted { return LumeTheme.accent.opacity(0.18) }
+        if isHighlighted { return theme.accent.opacity(0.18) }
         if isHovered     { return Color.primary.opacity(0.05) }
         return .clear
     }

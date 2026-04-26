@@ -30,12 +30,16 @@ final class UpdateChecker {
     /// Set true once `check()` has run at least once.
     var hasChecked: Bool = false
     var isChecking: Bool = false
+    /// Tracked stored property so dismissing the banner triggers a
+    /// re-render of any view reading `isUpdateAvailable`. Mirrored to
+    /// UserDefaults so the choice survives restart.
+    var dismissedVersion: String?
 
     /// True when the latest release is strictly newer than the installed
     /// build *and* the user hasn't dismissed that specific version.
     var isUpdateAvailable: Bool {
         guard let latest else { return false }
-        if Self.dismissedVersion == latest.version { return false }
+        if dismissedVersion == latest.version { return false }
         return Self.compareVersions(latest.version, installedVersion) > 0
     }
 
@@ -49,7 +53,14 @@ final class UpdateChecker {
 
     func dismissCurrent() {
         guard let latest else { return }
+        dismissedVersion = latest.version
         UserDefaults.standard.set(latest.version, forKey: Self.dismissedVersionKey)
+    }
+
+    init() {
+        // Hydrate the dismissed-version cache from UserDefaults so the
+        // banner stays hidden across launches.
+        self.dismissedVersion = UserDefaults.standard.string(forKey: Self.dismissedVersionKey)
     }
 
     /// Hit the GitHub API once. Failures are silent — no surfacing of
@@ -93,10 +104,6 @@ final class UpdateChecker {
         f.formatOptions = [.withInternetDateTime]
         return f
     }()
-
-    private static var dismissedVersion: String? {
-        UserDefaults.standard.string(forKey: dismissedVersionKey)
-    }
 
     /// Returns +1 / 0 / -1 like `<=>`. Compares dotted numeric components.
     static func compareVersions(_ a: String, _ b: String) -> Int {

@@ -5,8 +5,12 @@ import SwiftUI
 /// breadth for relevance — the symbols here are the ones people actually
 /// reach for when bucketing clips (work / code / comm / time / misc).
 struct SFSymbolPicker: View {
+    @Environment(LumeTheme.self) private var theme
     @Binding var selection: String
-    var tint: Color = LumeTheme.accent
+    /// Accent override; nil falls back to the env theme accent so callers
+    /// don't need to pass anything in the common case.
+    var tint: Color? = nil
+    private var effectiveTint: Color { tint ?? theme.accent }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 8)
 
@@ -29,11 +33,11 @@ struct SFSymbolPicker: View {
         } label: {
             Image(systemName: name)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundStyle(isSelected ? Color.white : tint)
+                .foregroundStyle(isSelected ? Color.white : effectiveTint)
                 .frame(width: 32, height: 32)
                 .background(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(isSelected ? tint : tint.opacity(0.12))
+                        .fill(isSelected ? effectiveTint : effectiveTint.opacity(0.12))
                 )
         }
         .buttonStyle(.plain)

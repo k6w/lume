@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HotkeyStep: View {
+    @Environment(LumeTheme.self) private var theme
     let environment: AppEnvironment
 
     var body: some View {
@@ -28,11 +29,11 @@ struct HotkeyStep: View {
             .frame(width: 64, height: 64)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(LumeTheme.accent.opacity(0.15))
+                    .fill(theme.accent.opacity(0.15))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(LumeTheme.accent.opacity(0.45), lineWidth: 1)
+                    .stroke(theme.accent.opacity(0.45), lineWidth: 1)
             )
     }
 }

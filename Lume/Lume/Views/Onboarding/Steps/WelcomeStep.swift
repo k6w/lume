@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WelcomeStep: View {
+    @Environment(LumeTheme.self) private var theme
     var body: some View {
         VStack(spacing: Tokens.Spacing.l) {
             Spacer()
@@ -8,7 +9,7 @@ struct WelcomeStep: View {
                 .resizable()
                 .interpolation(.high)
                 .frame(width: 96, height: 96)
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
             VStack(spacing: 6) {
                 Text("Lume")
                     .font(.system(size: 36, weight: .semibold))

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TagsPane: View {
+    @Environment(LumeTheme.self) private var theme
     let environment: AppEnvironment
     @State private var rows: [(Tag, Int)] = []
     @State private var draft: Tag?
@@ -10,7 +11,7 @@ struct TagsPane: View {
             Section {
                 Button {
                     draft = Tag(id: UUID().uuidString, name: "",
-                                colorHex: LumeTheme.accent.hexString,
+                                colorHex: theme.accent.hexString,
                                 icon: "tag")
                 } label: {
                     Label("New Tag…", systemImage: "plus.circle")

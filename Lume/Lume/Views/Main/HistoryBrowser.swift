@@ -12,14 +12,18 @@ import GRDB
 /// `@Binding`s so the hoisted toolbar (Copy + Search) stays in sync
 /// across every tab.
 struct HistoryBrowser: View {
+    @Environment(LumeTheme.self) private var theme
     let environment: AppEnvironment
     let scope: SidebarItem
     @Binding var query: String
     @Binding var focusedClipID: String?
+    @Binding var tagFilter: TagFilter
 
     @State private var clips: [Clip] = []
     @State private var selection: String?
     @State private var observationTask: Task<Void, Never>?
+    @State private var tagsByClip: [String: Set<String>] = [:]
+    @State private var tagsObservationTask: Task<Void, Never>?
 
     var body: some View {
         HSplitView {
@@ -29,8 +33,14 @@ struct HistoryBrowser: View {
                 .frame(minWidth: 320)
         }
         .navigationTitle(scope.rawValue)
-        .onAppear { startObservation() }
-        .onDisappear { observationTask?.cancel() }
+        .onAppear {
+            startObservation()
+            startTagsObservation()
+        }
+        .onDisappear {
+            observationTask?.cancel()
+            tagsObservationTask?.cancel()
+        }
         .onChange(of: selection) { _, newValue in focusedClipID = newValue }
         .onChange(of: focused?.id) { _, _ in /* triggers redraw */ }
     }
@@ -140,9 +150,20 @@ struct HistoryBrowser: View {
         case .thisWeek: scopeFiltered = clips.filter { cal.isDate($0.lastSeenAt, equalTo: now, toGranularity: .weekOfYear) }
         default:        scopeFiltered = clips
         }
+
+        let tagFiltered: [Clip]
+        switch tagFilter {
+        case .all:
+            tagFiltered = scopeFiltered
+        case .untagged:
+            tagFiltered = scopeFiltered.filter { (tagsByClip[$0.id]?.isEmpty ?? true) }
+        case .tagID(let id):
+            tagFiltered = scopeFiltered.filter { tagsByClip[$0.id]?.contains(id) ?? false }
+        }
+
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return scopeFiltered }
-        return scopeFiltered.filter {
+        guard !q.isEmpty else { return tagFiltered }
+        return tagFiltered.filter {
             ($0.plainText?.lowercased().contains(q) ?? false) ||
             ($0.sourceBundleID?.lowercased().contains(q) ?? false) ||
             ($0.colorHex?.lowercased().contains(q) ?? false)
@@ -157,6 +178,20 @@ struct HistoryBrowser: View {
     private func delete(_ clip: Clip) {
         try? environment.clipRepository.delete(id: clip.id)
         if selection == clip.id { selection = nil }
+    }
+
+    private func startTagsObservation() {
+        tagsObservationTask?.cancel()
+        tagsObservationTask = Task { @MainActor in
+            do {
+                let observation = environment.tagRepository.observeTagsByClip()
+                for try await fresh in observation.values(in: environment.tagRepository.pool) {
+                    self.tagsByClip = fresh
+                }
+            } catch {
+                NSLog("[Lume] tags-by-clip observe failed: \(error)")
+            }
+        }
     }
 
     private func startObservation() {
@@ -178,13 +213,14 @@ struct HistoryBrowser: View {
 }
 
 private struct ClipListItem: View {
+    @Environment(LumeTheme.self) private var theme
     let clip: Clip
 
     var body: some View {
         HStack(alignment: .top, spacing: Tokens.Spacing.m) {
             Image(systemName: clip.kind.sfSymbol)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
                 .frame(width: 24, height: 24)
             VStack(alignment: .leading, spacing: 2) {
                 ClipPreview(clip: clip, compact: true)
@@ -195,7 +231,7 @@ private struct ClipListItem: View {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
                     .rotationEffect(.degrees(45))
-                    .foregroundStyle(LumeTheme.accent)
+                    .foregroundStyle(theme.accent)
             }
         }
         .padding(.vertical, 4)

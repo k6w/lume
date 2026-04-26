@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PermissionsStep: View {
+    @Environment(LumeTheme.self) private var theme
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.l) {
             Spacer(minLength: 0)
@@ -26,9 +27,9 @@ struct PermissionsStep: View {
         HStack(alignment: .top, spacing: Tokens.Spacing.m) {
             Image(systemName: symbol)
                 .font(.system(size: 22, weight: .regular))
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
                 .frame(width: 36, height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(LumeTheme.accent.opacity(0.15)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(theme.accent.opacity(0.15)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.headline)
                 Text(body).foregroundStyle(.secondary).font(.subheadline)

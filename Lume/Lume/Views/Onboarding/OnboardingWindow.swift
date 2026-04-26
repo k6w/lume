@@ -4,6 +4,7 @@ import SwiftUI
 /// glass background with the brand gradient bleeding through.
 @MainActor
 struct OnboardingWindow: View {
+    private let theme = LumeTheme.shared
     let environment: AppEnvironment
     var onFinish: () -> Void
     @State private var step: Int = 0
@@ -21,6 +22,7 @@ struct OnboardingWindow: View {
             .padding(Tokens.Spacing.xl)
         }
         .frame(width: 540, height: 580)
+        .environment(theme)
     }
 
     private var background: some View {
@@ -55,7 +57,7 @@ struct OnboardingWindow: View {
         HStack(spacing: 6) {
             ForEach(0..<4) { i in
                 Circle()
-                    .fill(i == step ? LumeTheme.accent : Color.secondary.opacity(0.3))
+                    .fill(i == step ? theme.accent : Color.secondary.opacity(0.3))
                     .frame(width: 7, height: 7)
             }
         }

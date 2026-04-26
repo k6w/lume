@@ -1,18 +1,32 @@
 import SwiftUI
+import Observation
 
-/// Single user-tunable token: the accent colour. Liquid Glass owns
-/// light/dark, contrast, and vibrancy; we don't fight the system.
-struct LumeTheme {
+/// User-tunable accent color for Lume.
+///
+/// Single source of truth: `LumeTheme.shared`. Inject at the root of
+/// every window with `.environment(LumeTheme.shared)`, then read in
+/// views with `@Environment(LumeTheme.self) private var theme` and use
+/// `theme.accent`. The setter writes to UserDefaults so the choice
+/// survives restarts; the `@Observable` machinery makes every reading
+/// view re-render the moment the picker fires.
+@MainActor
+@Observable
+final class LumeTheme {
+    static let shared = LumeTheme()
     static let accentKey = "lume.accent"
 
-    static var accent: Color {
-        get {
-            if let hex = UserDefaults.standard.string(forKey: accentKey),
-               let c = Color(hex: hex) { return c }
-            return Tokens.Brand.indigo
+    var accent: Color {
+        didSet {
+            UserDefaults.standard.set(accent.hexString, forKey: Self.accentKey)
         }
-        set {
-            UserDefaults.standard.set(newValue.hexString, forKey: accentKey)
+    }
+
+    private init() {
+        if let hex = UserDefaults.standard.string(forKey: Self.accentKey),
+           let c = Color(hex: hex) {
+            self.accent = c
+        } else {
+            self.accent = Tokens.Brand.indigo
         }
     }
 }
@@ -27,7 +41,7 @@ extension Color {
         self = Color(red: r, green: g, blue: b)
     }
     var hexString: String {
-        // Best-effort serialization; falls back to "#9B8CFF" if the system
+        // Best-effort serialization; falls back to "#7A70FF" if the system
         // can't resolve the components (e.g. dynamic colour).
         #if canImport(AppKit)
         if let c = NSColor(self).usingColorSpace(.sRGB) {
@@ -37,6 +51,6 @@ extension Color {
                           Int(c.blueComponent * 255))
         }
         #endif
-        return "#9B8CFF"
+        return "#7A70FF"
     }
 }

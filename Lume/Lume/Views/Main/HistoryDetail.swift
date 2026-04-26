@@ -5,6 +5,7 @@ import AppKit
 /// preview, optional file-staleness banner, optional URL action,
 /// quick-transform palette, text stats, and metadata.
 struct HistoryDetail: View {
+    @Environment(LumeTheme.self) private var theme
     let clip: Clip?
     let environment: AppEnvironment
 
@@ -57,7 +58,7 @@ struct HistoryDetail: View {
     private func header(_ clip: Clip) -> some View {
         HStack(spacing: Tokens.Spacing.s) {
             Image(systemName: clip.kind.sfSymbol)
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
             Text(clip.kind.displayName).font(.headline)
             Spacer()
             Button {
@@ -223,7 +224,7 @@ struct HistoryDetail: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: kind.symbol)
-                    .foregroundStyle(LumeTheme.accent)
+                    .foregroundStyle(theme.accent)
                 Text(kind.label)
                     .font(.subheadline.weight(.semibold))
                 Spacer()
@@ -314,6 +315,7 @@ struct HistoryDetail: View {
 /// opens the editor sheet. Created tags are auto-applied to the current
 /// clip so the create-and-tag flow is one click.
 private struct TagsAssigner: View {
+    @Environment(LumeTheme.self) private var theme
     let clip: Clip
     let environment: AppEnvironment
     @State private var assigned: [Tag] = []
@@ -332,7 +334,7 @@ private struct TagsAssigner: View {
                 Menu {
                     Button {
                         draft = Tag(id: UUID().uuidString, name: "",
-                                    colorHex: LumeTheme.accent.hexString, icon: "tag")
+                                    colorHex: theme.accent.hexString, icon: "tag")
                     } label: {
                         Label("New Tag…", systemImage: "plus")
                     }

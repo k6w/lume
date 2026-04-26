@@ -3,6 +3,7 @@ import SwiftUI
 /// One row in the history list. Single-tap activates (paste). Compact
 /// chrome so 7+ rows fit in the popover.
 struct ClipRow: View {
+    @Environment(LumeTheme.self) private var theme
     let clip: Clip
     let isHighlighted: Bool
     var onPaste: () -> Void
@@ -32,7 +33,7 @@ struct ClipRow: View {
         .overlay {
             if isHighlighted {
                 RoundedRectangle(cornerRadius: Tokens.Radius.m, style: .continuous)
-                    .stroke(LumeTheme.accent.opacity(0.5), lineWidth: 1)
+                    .stroke(theme.accent.opacity(0.5), lineWidth: 1)
             }
         }
         .contentShape(Rectangle())
@@ -45,7 +46,7 @@ struct ClipRow: View {
     }
 
     private var rowBackground: Color {
-        if isHighlighted { return LumeTheme.accent.opacity(0.18) }
+        if isHighlighted { return theme.accent.opacity(0.18) }
         if isHovered     { return Color.primary.opacity(0.05) }
         return .clear
     }
@@ -53,10 +54,10 @@ struct ClipRow: View {
     private var kindChip: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(LumeTheme.accent.opacity(0.16))
+                .fill(theme.accent.opacity(0.16))
             Image(systemName: clip.kind.sfSymbol)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
         }
         .frame(width: 26, height: 26)
     }
@@ -97,7 +98,7 @@ struct ClipRow: View {
             Button(action: onPin) {
                 Image(systemName: clip.isPinned ? "pin.fill" : "pin")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(clip.isPinned ? LumeTheme.accent : .secondary)
+                    .foregroundStyle(clip.isPinned ? theme.accent : .secondary)
                     .rotationEffect(.degrees(45))
                     .frame(width: 22, height: 22)
                     .contentShape(Rectangle())

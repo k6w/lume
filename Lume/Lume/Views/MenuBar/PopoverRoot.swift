@@ -6,6 +6,12 @@ import AppKit
 /// virtualized history list, and ferries actions back to the AppKit shell.
 @MainActor
 struct PopoverRoot: View {
+    /// Root views can't read `@Environment(LumeTheme.self)` because nothing
+    /// upstream injects it (we're hosted by `NSHostingController`). Hold a
+    /// direct reference to the singleton; the Observation framework tracks
+    /// `theme.accent` reads in `body` automatically. Children further down
+    /// continue to read it via `@Environment` (we inject it below).
+    private let theme = LumeTheme.shared
     let clipRepository: ClipRepository
     let snippetRepository: SnippetRepository
     let fts: FullTextSearch
@@ -25,6 +31,11 @@ struct PopoverRoot: View {
     @State private var captureFlash = false
 
     var body: some View {
+        rootContent
+            .environment(theme)
+    }
+
+    private var rootContent: some View {
         GlassRoot {
             VStack(spacing: 0) {
                 header
@@ -91,7 +102,7 @@ struct PopoverRoot: View {
             Spacer()
             Image(systemName: query.isEmpty ? "sparkles" : "magnifyingglass")
                 .font(.system(size: 32, weight: .light))
-                .foregroundStyle(LumeTheme.accent)
+                .foregroundStyle(theme.accent)
             Text(query.isEmpty ? "Nothing here yet" : "No matches")
                 .font(.headline)
             Text(query.isEmpty
@@ -121,7 +132,7 @@ struct PopoverRoot: View {
                 }.font(.caption)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(LumeTheme.accent)
+            .foregroundStyle(theme.accent)
         }
         .padding(.horizontal, Tokens.Spacing.m)
         .padding(.vertical, Tokens.Spacing.s)
@@ -149,7 +160,7 @@ struct PopoverRoot: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .foregroundStyle(LumeTheme.accent)
+        .foregroundStyle(theme.accent)
     }
 
     @ViewBuilder private var captureToast: some View {

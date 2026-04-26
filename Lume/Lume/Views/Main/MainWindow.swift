@@ -3,11 +3,23 @@ import SwiftUI
 @MainActor
 struct MainWindowRoot: View {
     let environment: AppEnvironment
+    /// We hold a direct reference to the theme singleton so the body can
+    /// inject it into the env tree below; descendants then read it via
+    /// `@Environment(LumeTheme.self)`.
+    private let theme = LumeTheme.shared
     @State private var selection: SidebarItem = .all
     @State private var query: String = ""
     @State private var focusedClipID: String?
+    @State private var tagFilter: TagFilter = .all
+    @State private var allTags: [Tag] = []
+    @State private var tagObservationTask: Task<Void, Never>?
 
     var body: some View {
+        rootContent
+            .environment(theme)
+    }
+
+    private var rootContent: some View {
         NavigationSplitView {
             Sidebar(selection: $selection)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 260)
@@ -47,6 +59,82 @@ struct MainWindowRoot: View {
                     .frame(width: 220)
                     .disabled(isMetaTab)
             }
+            ToolbarItem(placement: .navigation) {
+                tagFilterMenu
+                    .disabled(isMetaTab)
+            }
+        }
+        .onAppear { startTagObservation() }
+        .onDisappear { tagObservationTask?.cancel() }
+    }
+
+    private var tagFilterMenu: some View {
+        Menu {
+            Button {
+                tagFilter = .all
+            } label: {
+                Label("All Tags", systemImage: tagFilter == .all ? "checkmark" : "tag")
+            }
+            Button {
+                tagFilter = .untagged
+            } label: {
+                Label("Untagged", systemImage: tagFilter == .untagged ? "checkmark" : "tag.slash")
+            }
+            if !allTags.isEmpty {
+                Divider()
+                ForEach(allTags, id: \.id) { tag in
+                    Button {
+                        tagFilter = .tagID(tag.id)
+                    } label: {
+                        Label(tag.name, systemImage: isSelected(tag) ? "checkmark" : (tag.icon ?? "tag"))
+                    }
+                }
+            }
+        } label: {
+            Label(currentFilterLabel, systemImage: currentFilterSymbol)
+        }
+        .help("Filter by tag")
+    }
+
+    private func isSelected(_ tag: Tag) -> Bool {
+        if case .tagID(let id) = tagFilter, id == tag.id { return true }
+        return false
+    }
+
+    private var currentFilterLabel: String {
+        switch tagFilter {
+        case .all: return "All Tags"
+        case .untagged: return "Untagged"
+        case .tagID(let id):
+            return allTags.first(where: { $0.id == id })?.name ?? "Tag"
+        }
+    }
+
+    private var currentFilterSymbol: String {
+        switch tagFilter {
+        case .all: return "tag"
+        case .untagged: return "tag.slash"
+        case .tagID(let id):
+            return allTags.first(where: { $0.id == id })?.icon ?? "tag.fill"
+        }
+    }
+
+    private func startTagObservation() {
+        tagObservationTask?.cancel()
+        tagObservationTask = Task { @MainActor in
+            do {
+                let observation = environment.tagRepository.observeAll()
+                for try await fresh in observation.values(in: environment.tagRepository.pool) {
+                    self.allTags = fresh
+                    // Drop the active filter if its tag was deleted.
+                    if case .tagID(let id) = tagFilter,
+                       !fresh.contains(where: { $0.id == id }) {
+                        tagFilter = .all
+                    }
+                }
+            } catch {
+                NSLog("[Lume] tag observe failed: \(error)")
+            }
         }
     }
 
@@ -69,7 +157,8 @@ struct MainWindowRoot: View {
             HistoryBrowser(environment: environment,
                            scope: selection,
                            query: $query,
-                           focusedClipID: $focusedClipID)
+                           focusedClipID: $focusedClipID,
+                           tagFilter: $tagFilter)
         }
     }
 }

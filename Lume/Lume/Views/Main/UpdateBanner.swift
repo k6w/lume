@@ -4,6 +4,7 @@ import AppKit
 /// Shown above MainWindowRoot's content when a newer release is on
 /// GitHub. Single accent strip — clickable, dismissible per-version.
 struct UpdateBanner: View {
+    @Environment(LumeTheme.self) private var theme
     let release: UpdateChecker.ReleaseInfo
     var installedVersion: String
     var onOpen: () -> Void
@@ -16,7 +17,7 @@ struct UpdateBanner: View {
                 .frame(width: 26, height: 26)
                 .background(
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(LumeTheme.accent)
+                        .fill(theme.accent)
                 )
             VStack(alignment: .leading, spacing: 1) {
                 Text("Lume \(release.tag) is available")
