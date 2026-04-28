@@ -4,7 +4,7 @@ struct PrivacyPane: View {
     let environment: AppEnvironment
     @State private var excludedApps: [String] = []
     @State private var newBundleID: String = ""
-    @AppStorage("lume.encryptSensitive") private var encryptSensitive: Bool = true
+    @AppStorage("lume.encryptSensitive") private var encryptSensitive: Bool = false
 
     var body: some View {
         Form {

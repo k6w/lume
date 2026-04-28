@@ -10,6 +10,7 @@ struct PopoverRoot: View {
     let clipRepository: ClipRepository
     let snippetRepository: SnippetRepository
     let fts: FullTextSearch
+    let encryption: EncryptionService
     var onPaste: (Clip) -> Void
     var onPin: (Clip) -> Void
     var onDelete: (Clip) -> Void
@@ -181,11 +182,12 @@ struct PopoverRoot: View {
             do {
                 let observation = clipRepository.observeRecent(limit: 50)
                 for try await fresh in observation.values(in: clipRepository.pool) {
-                    let isNew = fresh.first?.id != lastCaptureID && lastCaptureID != nil
-                    self.clips = fresh
-                    if selection == nil { selection = fresh.first?.id }
+                    let resolved = fresh.map { encryption.open($0) }
+                    let isNew = resolved.first?.id != lastCaptureID && lastCaptureID != nil
+                    self.clips = resolved
+                    if selection == nil { selection = resolved.first?.id }
                     if isNew { flashCapture() }
-                    lastCaptureID = fresh.first?.id
+                    lastCaptureID = resolved.first?.id
                 }
             } catch {
                 NSLog("[Lume] observe failed: \(error)")
@@ -223,7 +225,8 @@ struct PopoverRoot: View {
         observationTask?.cancel()
         Task { @MainActor in
             do {
-                clips = try fts.search(q, limit: 80)
+                let raw = try fts.search(q, limit: 80)
+                clips = raw.map { encryption.open($0) }
                 selection = clips.first?.id
             } catch {
                 NSLog("[Lume] fts failed: \(error)")

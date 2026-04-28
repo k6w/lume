@@ -6,6 +6,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let environment = AppEnvironment()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Apply the persisted Dock-visibility preference. Info.plist has
+        // LSUIElement=true so we boot as .accessory; flip to .regular if
+        // the user opted to show the Dock icon.
+        if UserDefaults.standard.bool(forKey: "lume.showInDock") {
+            NSApp.setActivationPolicy(.regular)
+        }
+
         environment.menuBar.install()
         environment.menuBar.prewarmPopover()
 
@@ -49,7 +56,7 @@ final class AppEnvironment {
         self.tagRepository = TagRepository(database: db)
         self.encryption = EncryptionService()
         self.sensitivity = SensitivityDetector()
-        self.pasteInjector = PasteInjector()
+        self.pasteInjector = PasteInjector(encryption: encryption)
         self.pasteboardWatcher = PasteboardWatcher(
             repository: clips,
             sensitivity: sensitivity,

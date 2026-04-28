@@ -1,11 +1,12 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 struct GeneralPane: View {
     @LumeAccent private var accent
     let environment: AppEnvironment
 
-    @AppStorage("lume.launchAtLogin")  private var launchAtLogin: Bool = true
+    @State private var launchAtLogin: Bool = LaunchAtLogin.isEnabled
     @AppStorage("lume.plainTextPaste") private var plainTextPaste: Bool = false
     @AppStorage("lume.showInDock")     private var showInDock: Bool = false
     @AppStorage(PopoverStyle.storageKey) private var popoverStyleRaw: String = PopoverStyle.default.rawValue
@@ -18,8 +19,18 @@ struct GeneralPane: View {
         Form {
             Section("Behavior") {
                 Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        // Bounce the toggle back to the actual SMAppService
+                        // status if registration fails — otherwise the UI
+                        // would lie about whether autostart is wired up.
+                        let applied = LaunchAtLogin.setEnabled(newValue)
+                        if applied != newValue { launchAtLogin = applied }
+                    }
                 Toggle("Always paste as plain text", isOn: $plainTextPaste)
                 Toggle("Show Lume in the Dock", isOn: $showInDock)
+                    .onChange(of: showInDock) { _, on in
+                        NSApp.setActivationPolicy(on ? .regular : .accessory)
+                    }
             }
             Section("Appearance") {
                 // `$accent` is the projectedValue from @LumeAccent — a
@@ -83,5 +94,11 @@ struct GeneralPane: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear {
+            // Resync from system truth — the user may have toggled the
+            // login-item or dock policy outside Lume since this pane was
+            // last shown.
+            launchAtLogin = LaunchAtLogin.isEnabled
+        }
     }
 }

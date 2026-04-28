@@ -40,6 +40,7 @@ final class MenuBarController: NSObject {
             clipRepository: environment.clipRepository,
             snippetRepository: environment.snippetRepository,
             fts: FullTextSearch(database: environment.database),
+            encryption: environment.encryption,
             onPaste: { [weak self] clip in self?.paste(clip) },
             onPin: { [weak self] clip in self?.togglePin(clip) },
             onDelete: { [weak self] clip in self?.delete(clip) },

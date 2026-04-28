@@ -8,6 +8,7 @@ import Carbon.HIToolbox
 @MainActor
 final class PasteInjector {
     private let pasteboard: NSPasteboard
+    private let encryption: EncryptionService?
 
     /// `changeCount` we last wrote ourselves. The PasteboardWatcher
     /// reads this to skip ticks Lume itself caused — without this the
@@ -15,46 +16,60 @@ final class PasteInjector {
     /// and resets lastSeenAt for the clip you just clicked.
     private(set) var ownedChangeCount: Int? = nil
 
-    init(pasteboard: NSPasteboard = .general) {
+    init(pasteboard: NSPasteboard = .general, encryption: EncryptionService? = nil) {
         self.pasteboard = pasteboard
+        self.encryption = encryption
     }
 
-    /// Place a clip on the pasteboard.
+    /// Place a clip on the pasteboard. Encrypted clips are unsealed
+    /// first; the "always paste plain text" setting strips formatting
+    /// for text-shaped kinds.
     func copy(_ clip: Clip) {
+        let resolved = encryption?.open(clip) ?? clip
+        if UserDefaults.standard.bool(forKey: "lume.plainTextPaste") {
+            switch resolved.kind {
+            case .text, .code, .rtf, .html:
+                copyAsPlainText(resolved)
+                return
+            default:
+                break
+            }
+        }
         pasteboard.clearContents()
-        switch clip.kind {
+        switch resolved.kind {
         case .text, .code:
-            if let s = clip.plainText { pasteboard.setString(s, forType: .string) }
+            if let s = resolved.plainText { pasteboard.setString(s, forType: .string) }
         case .rtf:
-            if let d = clip.rtfData { pasteboard.setData(d, forType: .rtf) }
-            if let s = clip.plainText { pasteboard.setString(s, forType: .string) }
+            if let d = resolved.rtfData { pasteboard.setData(d, forType: .rtf) }
+            if let s = resolved.plainText { pasteboard.setString(s, forType: .string) }
         case .html:
-            if let d = clip.htmlData { pasteboard.setData(d, forType: .html) }
-            if let s = clip.plainText { pasteboard.setString(s, forType: .string) }
+            if let d = resolved.htmlData { pasteboard.setData(d, forType: .html) }
+            if let s = resolved.plainText { pasteboard.setString(s, forType: .string) }
         case .image:
-            if let d = clip.imageData {
+            if let d = resolved.imageData {
                 pasteboard.setData(d, forType: .tiff)
                 pasteboard.setData(d, forType: .png)
             }
         case .file:
             // Only paste paths that still exist; anything missing falls
             // back to plain text so the user gets *something* useful.
-            let urls = clip.fileURLArray
+            let urls = resolved.fileURLArray
             let existing = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
             if !existing.isEmpty {
                 pasteboard.writeObjects(existing as [NSPasteboardWriting])
-            } else if let s = clip.fileURLs {
+            } else if let s = resolved.fileURLs {
                 pasteboard.setString(s, forType: .string)
             }
         case .color:
-            if let s = clip.colorHex { pasteboard.setString(s, forType: .string) }
+            if let s = resolved.colorHex { pasteboard.setString(s, forType: .string) }
         }
         ownedChangeCount = pasteboard.changeCount
     }
 
     /// Place text on the pasteboard, stripping formatting first.
     func copyAsPlainText(_ clip: Clip) {
-        guard let s = clip.plainText else { return }
+        let resolved = encryption?.open(clip) ?? clip
+        guard let s = resolved.plainText else { return }
         copyPlainText(s)
     }
 

@@ -63,9 +63,13 @@ final class PasteboardWatcher {
             return
         }
 
+        // The user can opt out of auto-encryption from the Privacy pane.
+        // Default true so first-run still protects passwords picked up
+        // from known vaults.
+        let encryptSensitive = UserDefaults.standard.object(forKey: "lume.encryptSensitive") as? Bool ?? true
         Task.detached(priority: .utility) { [repository, sensitivity, encryption] in
             var clip = candidate
-            if sensitivity.isLikelySensitive(clip) {
+            if encryptSensitive, sensitivity.isLikelySensitive(clip) {
                 clip = encryption.seal(clip)
             }
             do {

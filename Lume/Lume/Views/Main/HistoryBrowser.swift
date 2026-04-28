@@ -250,10 +250,14 @@ struct HistoryBrowser: View {
         observationTask = Task { @MainActor in
             do {
                 let observation = environment.clipRepository.observeRecent(limit: 200)
+                let encryption = environment.encryption
                 for try await fresh in observation.values(in: environment.clipRepository.pool) {
-                    self.clips = fresh
-                    if selection == nil || !fresh.contains(where: { $0.id == selection }) {
-                        selection = fresh.first?.id
+                    // Unseal sealed rows here so the rest of the view tree
+                    // can read plainText/rtfData/htmlData uniformly.
+                    let resolved = fresh.map { encryption.open($0) }
+                    self.clips = resolved
+                    if selection == nil || !resolved.contains(where: { $0.id == selection }) {
+                        selection = resolved.first?.id
                     }
                 }
             } catch {

@@ -146,23 +146,31 @@ struct StatsView: View {
                     return (s, n)
                 }
 
-                // Per-day for the last 30 days. Bucket by local-day midnight.
-                let cutoff = Date(timeIntervalSinceNow: -30 * 86_400)
+                // Per-day for the last 30 days. GRDB stores Date as ISO-8601
+                // TEXT, so bucket via SQLite's date(..., 'localtime') and key
+                // back into Swift by the same yyyy-MM-dd string.
+                let cal = Calendar.current
+                let today = cal.startOfDay(for: Date())
+                let firstDay = cal.date(byAdding: .day, value: -29, to: today) ?? today
                 let dayRows = try Row.fetchAll(db, sql: """
-                    SELECT CAST((lastSeenAt - ?) / 86400 AS INTEGER) AS day, COUNT(*) AS n
+                    SELECT date(lastSeenAt, 'localtime') AS day, COUNT(*) AS n
                     FROM clip
                     WHERE lastSeenAt >= ?
                     GROUP BY day
-                """, arguments: [cutoff.timeIntervalSince1970, cutoff.timeIntervalSince1970])
-                var counts: [Int: Int] = [:]
+                """, arguments: [firstDay])
+                var counts: [String: Int] = [:]
                 for row in dayRows {
-                    if let day: Int = row["day"], let n: Int = row["n"] { counts[day] = n }
+                    if let day: String = row["day"], let n: Int = row["n"] { counts[day] = n }
                 }
-                let cal = Calendar.current
+                let dayFmt = DateFormatter()
+                dayFmt.dateFormat = "yyyy-MM-dd"
+                dayFmt.timeZone = .current
+                dayFmt.locale = Locale(identifier: "en_US_POSIX")
                 var buckets: [DayBucket] = []
                 for d in 0..<30 {
-                    let date = cal.startOfDay(for: cutoff.addingTimeInterval(TimeInterval(d * 86_400)))
-                    buckets.append(DayBucket(date: date, count: counts[d] ?? 0))
+                    guard let date = cal.date(byAdding: .day, value: d, to: firstDay) else { continue }
+                    let key = dayFmt.string(from: date)
+                    buckets.append(DayBucket(date: date, count: counts[key] ?? 0))
                 }
                 let totals = Totals(total: total, byKind: byKind, bySource: bySource,
                                     pinned: pinned, encrypted: encrypted, bytes: bytes)
