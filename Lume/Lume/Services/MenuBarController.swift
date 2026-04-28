@@ -24,10 +24,17 @@ final class MenuBarController: NSObject {
             button.target = self
             button.action = #selector(handleClick(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            // Default to the running glyph. The watcher boots a moment
+            // later in bootBackgroundServices; reading isCapturing here
+            // would show the pause glyph until the user clicked pause
+            // and then resume — and we never start in a paused state.
+            let img = NSImage(named: "MenuBarTemplate")
+            img?.isTemplate = true
+            button.image = img
+            button.toolTip = "Lume — A clipboard, lit."
         }
         popover.behavior = .transient
         popover.animates = true
-        refreshStatusIcon()
     }
 
     /// Reflect capture state in the menu-bar glyph. Without this the user
