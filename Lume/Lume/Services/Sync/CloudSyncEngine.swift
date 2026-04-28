@@ -1,5 +1,6 @@
 import Foundation
 import CloudKit
+import Observation
 import GRDB
 import Security
 
@@ -10,6 +11,7 @@ import Security
 /// The engine is deliberately conservative: every error path keeps the
 /// local store as the source of truth so we never lose user data.
 @MainActor
+@Observable
 final class CloudSyncEngine {
     static let isEnabledKey = "lume.iCloud.enabled"
     static let containerIdentifier = "iCloud.app.lume.Lume"
@@ -224,9 +226,35 @@ final class CloudSyncEngine {
         let ids = try queue.pendingDeletes()
         guard !ids.isEmpty else { return }
         let recordIDs = ids.map { CKRecord.ID(recordName: $0, zoneID: ClipRecordMapper.zoneID) }
-        _ = try? await privateDB.modifyRecords(
-            saving: [], deleting: recordIDs, savePolicy: .changedKeys, atomically: false
-        )
-        try queue.clearTombstones(clipIDs: ids)
+
+        // Only clear tombstones for the rows the server actually
+        // confirmed gone — otherwise a transient network failure leaves
+        // orphan records on CloudKit forever.
+        let result: (saveResults: [CKRecord.ID: Result<CKRecord, Error>],
+                     deleteResults: [CKRecord.ID: Result<Void, Error>])
+        do {
+            result = try await privateDB.modifyRecords(
+                saving: [], deleting: recordIDs, savePolicy: .changedKeys, atomically: false
+            )
+        } catch {
+            NSLog("[Lume] flushDeletes failed: \(error)")
+            return
+        }
+
+        var settled: [String] = []
+        for (id, outcome) in result.deleteResults {
+            switch outcome {
+            case .success:
+                settled.append(id.recordName)
+            case .failure(let error as CKError) where error.code == .unknownItem:
+                // Already gone — fine.
+                settled.append(id.recordName)
+            case .failure(let error):
+                NSLog("[Lume] tombstone retained for \(id.recordName): \(error)")
+            }
+        }
+        if !settled.isEmpty {
+            try queue.clearTombstones(clipIDs: settled)
+        }
     }
 }

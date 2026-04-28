@@ -16,6 +16,10 @@ final class PasteboardWatcher {
     private var timer: Timer?
     private var lastChangeCount: Int
 
+    /// True while the watcher is polling. The menu-bar uses this to swap
+    /// the status item icon so the user can tell when capture is paused.
+    var isCapturing: Bool { timer != nil }
+
     init(
         repository: ClipRepository,
         sensitivity: SensitivityDetector,
@@ -80,7 +84,11 @@ final class PasteboardWatcher {
         }
     }
 
-    static var excludedAppCache: Set<String> = []
+    /// Bundle IDs the user has marked as excluded. Mutated from
+    /// PrivacyPane on the main actor and read from `tick()` (also main
+    /// actor); the explicit annotation keeps Swift 6 strict-concurrency
+    /// honest about the contract.
+    @MainActor static var excludedAppCache: Set<String> = []
 
     // MARK: Capture priorities
 

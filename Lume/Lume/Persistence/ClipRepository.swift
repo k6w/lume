@@ -50,8 +50,12 @@ final class ClipRepository: @unchecked Sendable {
 
     func setPinned(_ pinned: Bool, id: String) throws {
         try database.pool.write { db in
-            try db.execute(sql: "UPDATE clip SET isPinned = ? WHERE id = ?",
-                           arguments: [pinned ? 1 : 0, id])
+            // Bumping lastSeenAt on pin keeps the just-pinned clip at the
+            // top of the pinned section — without this, pinning an old
+            // clip looks like a no-op because the row stays buried.
+            try db.execute(sql: """
+                UPDATE clip SET isPinned = ?, lastSeenAt = ? WHERE id = ?
+            """, arguments: [pinned ? 1 : 0, Date(), id])
             try Self.markPending(db: db, clipID: id)
         }
     }

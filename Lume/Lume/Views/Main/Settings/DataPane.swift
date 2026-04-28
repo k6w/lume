@@ -13,7 +13,6 @@ struct DataPane: View {
 
     @AppStorage(CloudSyncEngine.isEnabledKey) private var iCloudEnabled: Bool = true
 
-    @State private var lastSyncedAt: Date?
     @State private var totalClips: Int = 0
 
     var body: some View {
@@ -29,7 +28,10 @@ struct DataPane: View {
 
             Section("Auto-purge") {
                 Stepper(value: $retentionText, in: 1...365) {
-                    Text("Text & colors after **\(retentionText)** days")
+                    Text("Text after **\(retentionText)** days")
+                }
+                Stepper(value: $retentionColors, in: 1...365) {
+                    Text("Colors after **\(retentionColors)** days")
                 }
                 if captureImages {
                     Stepper(value: $retentionImages, in: 1...90) {
@@ -47,7 +49,9 @@ struct DataPane: View {
             Section("iCloud") {
                 Toggle("Sync with iCloud", isOn: $iCloudEnabled)
                     .onChange(of: iCloudEnabled) { _, on in environment.cloud.setEnabled(on) }
-                if let date = lastSyncedAt {
+                // Read directly from the @Observable engine so this row
+                // refreshes the moment a sync pass finishes.
+                if let date = environment.cloud.lastSyncedAt {
                     LabeledContent("Last synced", value: date.formatted(.relative(presentation: .numeric)))
                 } else {
                     LabeledContent("Last synced", value: "Never")
@@ -127,7 +131,6 @@ struct DataPane: View {
     }
 
     private func reload() {
-        lastSyncedAt = environment.cloud.lastSyncedAt
         Task.detached {
             let n = (try? await environment.clipRepository.pool.read { db in
                 try Int.fetchOne(db, sql: "SELECT count(*) FROM clip")

@@ -21,15 +21,33 @@ final class MenuBarController: NSObject {
 
     func install() {
         if let button = statusItem.button {
-            button.image = NSImage(named: "MenuBarTemplate")
-            button.image?.isTemplate = true
             button.target = self
             button.action = #selector(handleClick(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-            button.toolTip = "Lume — A clipboard, lit."
         }
         popover.behavior = .transient
         popover.animates = true
+        refreshStatusIcon()
+    }
+
+    /// Reflect capture state in the menu-bar glyph. Without this the user
+    /// has no visible cue that "Pause Capture" did anything — the icon is
+    /// the only piece of UI present at rest.
+    func refreshStatusIcon() {
+        guard let button = statusItem.button else { return }
+        let isPaused = environment?.pasteboardWatcher.isCapturing == false
+        if isPaused {
+            let img = NSImage(systemSymbolName: "pause.circle",
+                              accessibilityDescription: "Lume — capture paused")
+            img?.isTemplate = true
+            button.image = img
+            button.toolTip = "Lume — capture paused"
+        } else {
+            let img = NSImage(named: "MenuBarTemplate")
+            img?.isTemplate = true
+            button.image = img
+            button.toolTip = "Lume — A clipboard, lit."
+        }
     }
 
     /// Build and warm the SwiftUI hosting view ahead of the first click,
@@ -116,8 +134,15 @@ final class MenuBarController: NSObject {
         settings.target = self
         settings.keyEquivalentModifierMask = [.command]
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Pause Capture",  action: #selector(menuPause),  keyEquivalent: "").target = self
-        menu.addItem(withTitle: "Resume Capture", action: #selector(menuResume), keyEquivalent: "").target = self
+        let isPaused = environment?.pasteboardWatcher.isCapturing == false
+        let pauseItem = menu.addItem(withTitle: "Pause Capture",
+                                     action: #selector(menuPause), keyEquivalent: "")
+        pauseItem.target = self
+        pauseItem.isEnabled = !isPaused
+        let resumeItem = menu.addItem(withTitle: "Resume Capture",
+                                      action: #selector(menuResume), keyEquivalent: "")
+        resumeItem.target = self
+        resumeItem.isEnabled = isPaused
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Lume", action: #selector(menuQuit), keyEquivalent: "q").target = self
         statusItem.menu = menu
@@ -126,7 +151,13 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func menuOpenMain() { openMainWindow() }
-    @objc private func menuPause()    { environment?.pasteboardWatcher.stop() }
-    @objc private func menuResume()   { environment?.pasteboardWatcher.start() }
+    @objc private func menuPause()    {
+        environment?.pasteboardWatcher.stop()
+        refreshStatusIcon()
+    }
+    @objc private func menuResume()   {
+        environment?.pasteboardWatcher.start()
+        refreshStatusIcon()
+    }
     @objc private func menuQuit()     { NSApp.terminate(nil) }
 }
