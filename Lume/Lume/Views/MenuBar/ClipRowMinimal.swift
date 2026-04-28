@@ -62,10 +62,24 @@ struct ClipRowMinimal: View {
             }
         case .image:
             HStack(spacing: 8) {
-                Image(systemName: "photo")
-                    .foregroundStyle(accent)
-                Text("Image · \(ByteCountFormatter.string(fromByteCount: Int64(clip.byteSize), countStyle: .file))")
+                if let data = clip.thumbnailData ?? clip.imageData {
+                    // Inline 18-px-tall thumb keeps the row dense but lets
+                    // the eye recognise screenshots/photos at a glance —
+                    // far more useful than a generic photo glyph.
+                    ThumbView(
+                        data: data,
+                        contentMode: .fill,
+                        maxWidth: 32, maxHeight: 18,
+                        radius: 3
+                    )
+                    .frame(width: 32, height: 18)
+                } else {
+                    Image(systemName: "photo")
+                        .foregroundStyle(accent)
+                }
+                Text("Image")
                     .lineLimit(1)
+                    .foregroundStyle(.secondary)
             }
         case .file:
             HStack(spacing: 8) {
@@ -113,6 +127,13 @@ struct ClipRowMinimal: View {
     private var meta: some View {
         HStack(spacing: 6) {
             Text(clip.lastSeenAt, style: .relative)
+            if clip.byteSize > 0 {
+                Text("·").foregroundStyle(.tertiary)
+                Text(ByteCountFormatter.string(
+                    fromByteCount: Int64(clip.byteSize), countStyle: .file
+                ))
+                .monospacedDigit()
+            }
             if clip.hitCount > 1 {
                 Text("·").foregroundStyle(.tertiary)
                 Text("×\(clip.hitCount)").monospacedDigit()
