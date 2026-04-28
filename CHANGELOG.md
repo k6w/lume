@@ -6,6 +6,65 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-28
+
+### Fixed
+- **Captures-per-day chart was always empty.** GRDB stored `Date` as
+  ISO-8601 TEXT in a REAL-affinity column, so the SQL did
+  `lastSeenAt - cutoff` numeric arithmetic and `WHERE lastSeenAt >=
+  numericCutoff` — both filtered every row. Bucket via SQLite
+  `date(lastSeenAt, 'localtime')` keyed by `yyyy-MM-dd` instead.
+- **"Launch at login" toggle did nothing.** Wired to
+  `SMAppService.mainApp` via a new `LaunchAtLogin` helper, with
+  re-sync on appear so System Settings changes don't leave the toggle
+  stale.
+- **"Show Lume in the Dock" toggle did nothing.** Now applied at boot
+  in `AppDelegate` and on toggle change via
+  `NSApp.setActivationPolicy`.
+- **"Always paste as plain text" toggle did nothing.**
+  `PasteInjector.copy` now reads the setting and routes
+  text/code/rtf/html through `copyAsPlainText`.
+- **"Encrypt clips that look like secrets" toggle did nothing.**
+  `PasteboardWatcher` now respects the toggle, and the default is
+  flipped to **off** so secret-shaped clips are not silently sealed
+  when the user has not opted in.
+- **Encrypted clips were silently invisible and unpasteable.**
+  `EncryptionService.open` was never called. Decrypt at the
+  observation boundary in `HistoryBrowser` and `PopoverRoot`, and
+  decrypt inside `PasteInjector.copy/copyAsPlainText` so paste-back
+  works for clips reached via `clipRepository.clip(id:)`.
+- **Menu-bar icon stuck on the pause glyph at boot.** `install()`
+  read `pasteboardWatcher.isCapturing` before
+  `bootBackgroundServices` had a chance to start the watcher, so
+  every launch looked paused. Default to the running glyph at
+  install; runtime Pause/Resume still refreshes.
+- **"Last synced" row in Data & iCloud was static.** `CloudSyncEngine`
+  is `@Observable`; the row reads `cloud.lastSyncedAt` directly so it
+  updates the moment a sync pass completes.
+- **Pinning didn't bump `lastSeenAt`.** A freshly-pinned clip stayed
+  buried in the pinned section. Now floats to the top.
+- **`CloudSyncEngine.flushDeletes` cleared tombstones unconditionally.**
+  A transient network blip used to drop the local tombstone while the
+  CloudKit row remained. Only clear for IDs the server confirmed
+  gone (or already missing).
+
+### Added
+- **Image thumbnails in the popover.** Minimal style now shows an
+  inline 32×18 thumbnail for image clips instead of a generic photo
+  glyph plus "Image · 247 KB" text. The byte size moves to the
+  hover/highlight meta line next to the relative time, hit count,
+  and source app.
+- **Visible Pause Capture state.** Menu-bar glyph swaps to
+  `pause.circle` while capture is paused. The right-click menu also
+  greys out the inactive of Pause/Resume.
+- **Color retention stepper.** `retentionColors` was already plumbed
+  through the purge scheduler; DataPane now actually exposes it.
+
+### Changed
+- `excludedAppCache` is annotated `@MainActor` — both its reader
+  (`tick`) and its writer (`PrivacyPane`) already lived there;
+  Swift 6 strict concurrency stops guessing.
+
 ## [0.3.1] — 2026-04-26
 
 ### Fixed
